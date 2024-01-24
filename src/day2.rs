@@ -21,4 +21,4 @@ fn solve_part1(input: &Vec<Vec<u32>>) -> u32 {
         l.iter().max().unwrap()-l.iter().min().unwrap()
     }).sum()
 }
-
+ 
