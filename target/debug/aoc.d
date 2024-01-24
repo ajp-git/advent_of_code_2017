@@ -1,0 +1,1 @@
+/home/ajp/kDrive/Rust/Advent\ Of\ Code/advent_of_code_2017/target/debug/aoc: /home/ajp/kDrive/Rust/Advent\ Of\ Code/advent_of_code_2017/input/2017/day1.txt /home/ajp/kDrive/Rust/Advent\ Of\ Code/advent_of_code_2017/src/day1.rs /home/ajp/kDrive/Rust/Advent\ Of\ Code/advent_of_code_2017/src/lib.rs /home/ajp/kDrive/Rust/Advent\ Of\ Code/advent_of_code_2017/src/main.rs
