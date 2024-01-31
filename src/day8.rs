@@ -2,12 +2,6 @@ use std::{cmp::max, collections::{HashMap, HashSet}};
 use aoc_runner_derive::{aoc, aoc_generator};
 use regex::Regex;
 
-/*
-uy dec -404 if mmw <= 2
-j inc 372 if gk >= -1
-uy inc -380 if umr > -4
-dy inc 257 if es > -9
- */
 #[derive(Debug)]
 enum Operation {
     Inc,
