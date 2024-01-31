@@ -75,5 +75,68 @@ fn input_generator(input: &str) -> Vec<Instruction> {
 #[aoc(day8, part1)]
 fn solve_part1(input: &Vec<Instruction>) -> i32 {
 
-    0
+    let mut h_regs:HashMap<String,i32>=HashMap::new();
+
+    for i in input.iter() {
+
+        let mut reg:i32=0;
+        if h_regs.get(&i.register).is_some(){
+            reg=*h_regs.get(&i.register).unwrap();
+        }
+
+        let mut test_reg:i32=0;
+        if h_regs.get(&i.test_reg).is_some(){
+            test_reg=*h_regs.get(&i.test_reg).unwrap();
+        }
+        let mut valid_test=false;
+
+        match i.test {
+            Test::Diff => {
+                if test_reg != i.test_val {
+                    valid_test=true;            
+                }
+            },
+            Test::Eq => {
+                if test_reg== i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::Inf => {
+                if test_reg < i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::Sup => {
+                if test_reg > i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::InfEq => {
+                if test_reg <= i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::SupEq => {
+                if test_reg >= i.test_val {
+                    valid_test=true;
+                }
+            },
+        }
+
+        if valid_test {
+            match i.ope {
+                Operation::Dec => {
+                    reg-=i.val;
+                },
+                Operation::Inc => {
+                    reg+=i.val;
+                }
+            } 
+        }
+        h_regs.insert(i.register.clone(), reg);
+    }
+    dbg!(&h_regs);
+    h_regs.iter().map(|(_,&v)|v).max().unwrap()
+    
 }
+
