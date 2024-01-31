@@ -1,4 +1,4 @@
-use std::{collections::{HashMap, HashSet}};
+use std::{cmp::max, collections::{HashMap, HashSet}};
 use aoc_runner_derive::{aoc, aoc_generator};
 use regex::Regex;
 
@@ -140,3 +140,72 @@ fn solve_part1(input: &Vec<Instruction>) -> i32 {
     
 }
 
+#[aoc(day8, part2)]
+fn solve_part2(input: &Vec<Instruction>) -> i32 {
+
+    let mut h_regs:HashMap<String,i32>=HashMap::new();
+    let mut max_reg:i32=0;
+
+    for i in input.iter() {
+
+        let mut reg:i32=0;
+        if h_regs.get(&i.register).is_some(){
+            reg=*h_regs.get(&i.register).unwrap();
+        }
+
+        let mut test_reg:i32=0;
+        if h_regs.get(&i.test_reg).is_some(){
+            test_reg=*h_regs.get(&i.test_reg).unwrap();
+        }
+        let mut valid_test=false;
+
+        match i.test {
+            Test::Diff => {
+                if test_reg != i.test_val {
+                    valid_test=true;            
+                }
+            },
+            Test::Eq => {
+                if test_reg== i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::Inf => {
+                if test_reg < i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::Sup => {
+                if test_reg > i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::InfEq => {
+                if test_reg <= i.test_val {
+                    valid_test=true;
+                }
+            },
+            Test::SupEq => {
+                if test_reg >= i.test_val {
+                    valid_test=true;
+                }
+            },
+        }
+
+        if valid_test {
+            match i.ope {
+                Operation::Dec => {
+                    reg-=i.val;
+                },
+                Operation::Inc => {
+                    reg+=i.val;
+                }
+            } 
+        }
+        h_regs.insert(i.register.clone(), reg);
+        max_reg=max(h_regs.iter().map(|(_,&v)|v).max().unwrap(), max_reg)
+
+    }
+    dbg!(&h_regs);
+    max_reg
+}
