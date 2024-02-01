@@ -1,7 +1,7 @@
 use aoc_runner_derive::{aoc, aoc_generator};
 #[aoc_generator(day10)]
-fn input_generator(input: &str) -> Vec<u32> {
-    input.split(',').filter_map(|f|f.trim().parse::<u32>().ok()).collect::<Vec<u32>>()
+fn input_generator(input: &str) -> Vec<usize> {
+    input.split(',').filter_map(|f|f.trim().parse::<usize>().ok()).collect::<Vec<usize>>()
 }
 #[derive(Debug,Clone)]
 struct Ring<T> {
@@ -9,18 +9,34 @@ struct Ring<T> {
     index: usize,
 }
 
-impl<T: std::clone::Clone> Ring<T> {
+impl<T: std::clone::Clone + std::fmt::Display> Ring<T> {
 
     fn new () -> Self {
         Ring { data: Vec::new(), index: 0 }
     }
 
+    fn display(&self) {
+        for i in 0..self.data.len(){
+            if let Some(t)=self.get(i) {
+                if self.index==i{
+                    print!("[{}]",t);
+                } else {
+                    print!(" {} ",t);
+                }    
+            }
+        }
+        println!();
+    }
     fn first (&self)-> Option<&T> {
         self.data.get(0)
     }
 
-    fn current(&self) -> Option<&T> {
-        self.data.get(self.index)
+    fn current(&self) -> usize {
+        self.index
+    }
+
+    fn set_current(&mut self, index:usize) {
+        self.index=index%self.data.len();
     }
 
     fn next(&mut self) {
@@ -87,22 +103,26 @@ impl<T: std::clone::Clone> Ring<T> {
 
 }
 #[aoc(day10, part1)]
-fn solve_part1(input: &Vec<u32>) -> u32 {
+fn solve_part1(input: &Vec<usize>) -> u32 {
 
-    let input=vec![3,4,1,5];
-    let mut data:Vec<u32>=(0..5).collect();
+//    let input=vec![3,4,1,5];
     
     let mut ring:Ring<u32>=Ring::new();
-    for i in 0..9 {
+    for i in 0..=255 {
         ring.push(i);
     }
-    ring.remove(0);
-    dbg!(&ring);
-    ring.rev(1,6);
-    dbg!(&ring);
-    ring.rev(1, 2);
-    dbg!(&ring);
-    0
+    ring.display();
+
+    let mut skip:usize=0;
+    for i in 0..input.len(){
+        ring.rev(ring.current(), input[i]);
+        ring.set_current(ring.current()+input[i]+skip);
+        skip+=1;
+        print!("\nStep {i} :\t");
+        ring.display();
+    }
+    ring.display();
+    ring.data[0]*ring.data[1]
 }
 
 #[cfg(test)]
