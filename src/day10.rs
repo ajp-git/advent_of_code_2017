@@ -1,7 +1,8 @@
 use aoc_runner_derive::{aoc, aoc_generator};
 #[aoc_generator(day10)]
-fn input_generator(input: &str) -> Vec<usize> {
-    input.split(',').filter_map(|f|f.trim().parse::<usize>().ok()).collect::<Vec<usize>>()
+fn input_generator(input: &str) -> Vec<u8> {
+//    input.split(',').filter_map(|f|f.trim().parse::<usize>().ok()).collect::<Vec<usize>>()
+    input.chars().map(|c|c as u8).collect::<Vec<u8>>()
 }
 #[derive(Debug,Clone)]
 struct Ring<T> {
@@ -102,29 +103,64 @@ impl<T: std::clone::Clone + std::fmt::Display> Ring<T> {
 
 
 }
-#[aoc(day10, part1)]
-fn solve_part1(input: &Vec<usize>) -> u32 {
+#[aoc(day10, part2)]
+fn solve_part2(input: &Vec<u8>) -> String {
+let mut input=input.clone();
+/*let mut input:Vec<u8>="1,2,3".to_string().chars().map(|c|c as u8).collect::<Vec<u8>>();  
+let mut input:Vec<u8>="1,2,4".to_string().chars().map(|c|c as u8).collect::<Vec<u8>>();  
+let mut input:Vec<u8>="".to_string().chars().map(|c|c as u8).collect::<Vec<u8>>();  */
 
-//    let input=vec![3,4,1,5];
-    
+let add:Vec<u8>=vec![17, 31, 73, 47, 23];
+    for i in add {
+        input.push(i);
+    }
+    println!("{:?}", input);
+
     let mut ring:Ring<u32>=Ring::new();
     for i in 0..=255 {
         ring.push(i);
     }
-    ring.display();
+
+    let mut skip:usize=0;
+    for r in 0..64{
+        for i in 0..input.len(){
+            ring.rev(ring.current(), input[i as usize] as usize);
+            ring.set_current(ring.current()+input[i as usize] as usize+skip);
+            skip+=1;
+        }    
+    }
+    // Xor calc
+    let mut x:Vec<u8>=vec![0;16];
+    for i in 0..=255{
+        x[i/16]=x[i/16] ^ (*ring.get(i).unwrap() as u8);
+    }
+
+    let mut out:String=String::new();
+    for i in x.iter(){
+        let hex = format!("{:02x}", i);
+        out.push_str(&hex);
+    }
+    println!();
+    out
+}
+
+#[aoc(day10, part1)]
+fn solve_part1(input: &Vec<u8>) -> u32 {
+    let input=vec![192,69,168,160,78,1,166,28,0,83,198,2,254,255,41,12];
+
+    let mut ring:Ring<u32>=Ring::new();
+    for i in 0..=255 {
+        ring.push(i);
+    }
 
     let mut skip:usize=0;
     for i in 0..input.len(){
-        ring.rev(ring.current(), input[i]);
-        ring.set_current(ring.current()+input[i]+skip);
+        ring.rev(ring.current(), input[i] as usize);
+        ring.set_current(ring.current()+input[i] as usize+skip);
         skip+=1;
-        print!("\nStep {i} :\t");
-        ring.display();
     }
-    ring.display();
     ring.data[0]*ring.data[1]
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
