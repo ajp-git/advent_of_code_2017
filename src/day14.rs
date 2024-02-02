@@ -1,5 +1,7 @@
+use std::{fmt::format, string};
+
 use aoc_runner_derive::{aoc, aoc_generator};
-#[aoc_generator(day10)]
+#[aoc_generator(day14)]
 fn input_generator(input: &str) -> Vec<u8> {
 //    input.split(',').filter_map(|f|f.trim().parse::<usize>().ok()).collect::<Vec<usize>>()
     input.chars().map(|c|c as u8).collect::<Vec<u8>>()
@@ -103,18 +105,9 @@ impl<T: std::clone::Clone + std::fmt::Display> Ring<T> {
 
 
 }
-#[aoc(day10, part2)]
-fn solve_part2(input: &Vec<u8>) -> String {
-    let mut input=input.clone();
-    /*let mut input:Vec<u8>="1,2,3".to_string().chars().map(|c|c as u8).collect::<Vec<u8>>();  
-    let mut input:Vec<u8>="1,2,4".to_string().chars().map(|c|c as u8).collect::<Vec<u8>>();  
-    let mut input:Vec<u8>="".to_string().chars().map(|c|c as u8).collect::<Vec<u8>>();  */
 
-    let add:Vec<u8>=vec![17, 31, 73, 47, 23];
-    for i in add {
-        input.push(i);
-    }
-    println!("{:?}", input);
+fn get_knot_hash (input: &Vec<u8>) -> String {
+    let mut input=input.clone();
 
     let mut ring:Ring<u32>=Ring::new();
     for i in 0..=255 {
@@ -140,27 +133,36 @@ fn solve_part2(input: &Vec<u8>) -> String {
         let hex = format!("{:02x}", i);
         out.push_str(&hex);
     }
-    println!();
     out
 }
+fn get_binary_from_hex(input: &String) -> String {
 
-#[aoc(day10, part1)]
-fn solve_part1(input: &Vec<u8>) -> u32 {
-    let input=vec![192,69,168,160,78,1,166,28,0,83,198,2,254,255,41,12];
-
-    let mut ring:Ring<u32>=Ring::new();
-    for i in 0..=255 {
-        ring.push(i);
-    }
-
-    let mut skip:usize=0;
-    for i in 0..input.len(){
-        ring.rev(ring.current(), input[i] as usize);
-        ring.set_current(ring.current()+input[i] as usize+skip);
-        skip+=1;
-    }
-    ring.data[0]*ring.data[1]
+    let dec=u128::from_str_radix(input, 16).unwrap();
+    format!("{:0width$b}", dec, width = 128)
 }
+
+#[aoc(day14, part1)]
+fn solve_part1(input: &Vec<u8>) -> usize {
+
+    let mut total:usize=0;
+
+    for i in 0..128 {
+        let mut input=input.clone();
+        for c in format!("-{}",i).chars(){
+            input.push(c as u8);
+        };
+        if i <20{
+            println!("{:?}",input);
+        }
+        let s=get_knot_hash_(&input);
+    //    println!("for {i} : {}",s);
+    //    println!("{}", get_binary_from_hex(&s));
+        let b=get_binary_from_hex(&s);
+        total+=b.chars().filter(|&c|c=='1').count() ;
+    }
+    total
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
