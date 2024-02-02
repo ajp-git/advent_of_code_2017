@@ -24,7 +24,30 @@ fn solve_part1(input: &Vec<String>) -> u32 {
             "se" => {r+=1;s-=1;}, 
             _ => panic!("unknown direction {d}"),       
         }
-        
     }
     (r.abs() as u32+ s.abs() as u32+q.abs() as u32)/2 as u32
+}
+
+#[aoc(day11, part2)]
+fn solve_part2(input: &Vec<String>) -> u32 {
+    
+    let mut q:i32=0;
+    let mut r:i32=0;
+    let mut s:i32=0;
+
+    let mut max_distance:u32=0;
+ 
+    for d in input{
+        match d.as_str() {
+            "nw" => {s+=1;r-=1;},        
+            "n" => {q+=1;r-=1;},        
+            "ne" => {q+=1;s-=1;},        
+            "sw" => {q-=1;s+=1;},        
+            "s" => {r+=1;q-=1;},        
+            "se" => {r+=1;s-=1;}, 
+            _ => panic!("unknown direction {d}"),       
+        }
+        max_distance=max_distance.max((r.abs() as u32+ s.abs() as u32+q.abs() as u32)/2 as u32);
+    }
+    max_distance
 }
