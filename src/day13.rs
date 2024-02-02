@@ -83,6 +83,49 @@ fn solve_part1(input: &Vec<Layer>) -> usize {
     total as usize
 }
 
+
+#[aoc(day13, part2)]
+fn solve_part2(input: &Vec<Layer>) -> usize {
+
+    let mut delay:u32=0;
+    let mut min_total: u32=u32::MAX;
+    loop {
+        let mut input = input.clone();
+        let mut total:u32=0;
+
+        let right=input.iter().map(|f|f.index).max().unwrap();
+    
+        for _ in 0..=delay {
+            for f in input.iter_mut(){
+                f.next_step();
+            }
+        }
+        for i in 0..=right{
+            if let Some(t)=input.iter().find(|f|f.index==i){
+                if t.is_top(){
+                    total+=t.levels*t.index;
+                }
+    
+            }
+            for f in input.iter_mut(){
+                f.next_step();
+            }
+        }
+        if total < min_total{
+            min_total=total;
+            println!("New min {} for delay {}\n", min_total, delay);
+        }
+        print!("\rDelay : {} \tTotal : {}", delay, total);
+        if total==0{
+            break;
+        }else {
+            delay+=1;
+        }            
+    }
+    delay as usize
+}
+
+
 fn display_firewall(input:&Vec<Layer>, left:u32, right:u32,current_layer:u32){
 
     let max_levels=input.iter().map(|f| f.levels).max().unwrap();
