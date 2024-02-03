@@ -1,4 +1,4 @@
-use std::{fmt::format, string};
+use std::{collections::{HashSet, VecDeque}, fmt::format, string};
 
 use aoc_runner_derive::{aoc, aoc_generator};
 #[aoc_generator(day14)]
@@ -108,7 +108,12 @@ impl<T: std::clone::Clone + std::fmt::Display> Ring<T> {
 
 fn get_knot_hash (input: &Vec<u8>) -> String {
     let mut input=input.clone();
-
+    
+    let add:Vec<u8>=vec![17, 31, 73, 47, 23];
+    for i in add {
+        input.push(i);
+    }
+    
     let mut ring:Ring<u32>=Ring::new();
     for i in 0..=255 {
         ring.push(i);
@@ -144,6 +149,7 @@ fn get_binary_from_hex(input: &String) -> String {
 #[aoc(day14, part1)]
 fn solve_part1(input: &Vec<u8>) -> usize {
 
+//    let input="flqrgnkx".chars().map(|c| c as u8).collect::<Vec<u8>>();
     let mut total:usize=0;
 
     for i in 0..128 {
@@ -151,16 +157,72 @@ fn solve_part1(input: &Vec<u8>) -> usize {
         for c in format!("-{}",i).chars(){
             input.push(c as u8);
         };
-        if i <20{
-            println!("{:?}",input);
-        }
-        let s=get_knot_hash_(&input);
+
+        let s=get_knot_hash (&input);
     //    println!("for {i} : {}",s);
     //    println!("{}", get_binary_from_hex(&s));
         let b=get_binary_from_hex(&s);
         total+=b.chars().filter(|&c|c=='1').count() ;
     }
     total
+}
+
+#[aoc(day14, part2)]
+fn solve_part2(input: &Vec<u8>) -> u32 {
+
+//    let input="flqrgnkx".chars().map(|c| c as u8).collect::<Vec<u8>>();
+    let mut grid:Vec<Vec<char>>=Vec::new();
+    let mut unseen:Vec<(usize,usize)>=Vec::new();
+    let mut queue:VecDeque<(usize,usize)>=VecDeque::new();
+    let mut count:u32=0;
+
+    for i in 0..128 {
+        let mut input=input.clone();
+        for c in format!("-{}",i).chars(){
+            input.push(c as u8);
+        };
+        let s=get_knot_hash (&input);
+        let b=get_binary_from_hex(&s);
+        grid.push(b.chars().collect::<Vec<char>>());
+    }
+    for y in 0..128 {
+        for x in 0..128 {
+            if grid[y][x]=='1' {
+                unseen.push((x,y));
+            }
+        }
+    }
+    while ! unseen.is_empty() {
+        queue.push_back(unseen[0]);
+        while queue.len()>0 {
+            let curr = queue.pop_front().unwrap();
+            print!("\rCurr: {:?}\t\tCount: {}", curr, count);
+            if let Some(f) = unseen.iter().position(|c|c==&curr) {
+                unseen.remove(f);
+                
+                let (x, y) = curr; // Example starting point
+
+                // Assuming x and y are usize and cannot be less than 0
+                if x > 0 {
+                    queue.push_back((x - 1, y));
+                }
+                if x < 127 {
+                    queue.push_back((x + 1, y));
+                }
+                if y > 0 {
+                    queue.push_back((x, y - 1));
+                }
+                if y < 127 {
+                    queue.push_back((x, y + 1));
+                }
+            }
+            
+        }
+        count+=1;
+    }
+    println!();
+    println!();
+    count
 }
 
 #[cfg(test)]
