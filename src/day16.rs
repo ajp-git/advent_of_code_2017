@@ -12,7 +12,7 @@ enum Instruction{
 fn input_generator(input: &str) -> Vec<Instruction> {
     let mut v:Vec<Instruction>=Vec::new();
 
-    let input="s1,x3/4,pe/b";
+//    let input="s1,x3/4,pe/b";
 
     let res=Regex::new(r"s(\d+)").unwrap();
     let ree=Regex::new(r"x(\d+)\/(\d+)").unwrap();
@@ -33,7 +33,8 @@ fn input_generator(input: &str) -> Vec<Instruction> {
 #[aoc(day16, part1)]
 fn solve_part1(input: &Vec<Instruction>) -> String {
 
-    let mut prog="abcde".chars().collect::<Vec<char>>();
+//    let mut prog="abcde".chars().collect::<Vec<char>>();
+    let mut prog="abcdefghijklmnop".chars().collect::<Vec<char>>();
 
     for ins in input.iter(){
         match ins {
