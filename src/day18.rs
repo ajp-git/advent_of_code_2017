@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use aoc_runner_derive::{aoc, aoc_generator};
-use regex::Regex;
 
 #[derive(Debug)]
 enum Data {
@@ -33,6 +32,16 @@ fn parse_ins_data(data: &str) -> Data {
 fn input_generator(input: &str) -> Vec<Instruction> {
     let mut v:Vec<Instruction>=Vec::new();
 
+    let input:&str="set a 1
+add a 2
+mul a a
+mod a 5
+snd a
+set a 0
+rcv a
+jgz a -1
+set a 1
+jgz a -2";
     for line in input.lines() {
         let parts:Vec<&str>=line.split_whitespace().collect();
 
@@ -51,9 +60,10 @@ fn input_generator(input: &str) -> Vec<Instruction> {
 }
 
 #[aoc(day18, part1)]
-fn solve_part1(input: &Vec<Instruction>) -> String {
+fn solve_part1(input: &Vec<Instruction>) -> u32 {
     let mut pos=0;
     let mut frequency:u32=0;
+    let mut last_sound_played:u32=0;
     let mut h_reg:HashMap<char,i32>=HashMap::new();
 
     loop {
@@ -84,6 +94,15 @@ fn solve_part1(input: &Vec<Instruction>) -> String {
                         } 
                         h_reg.insert(*a, c);
                     },
+                    (Data::Reg(a),Data::Reg(b))=>{
+                        if let Some(c)=h_reg.get(&a) {
+                            if let Some(d) = h_reg.get(&b) {
+                                let c=c*d;
+                                h_reg.insert(*a, c);
+                            }
+                        }
+                    }
+                   
                     __=>panic!("unknown instruction : {:?}", input[pos]),
                 }
             },
@@ -96,9 +115,19 @@ fn solve_part1(input: &Vec<Instruction>) -> String {
                 }
             },
             Instruction::Rcv(a) => {
-                
+                if let Some(c) = h_reg.get(&a) {
+                    if *c!=0 {
+                        return last_sound_played;
+                    }
+                }
             },
 
+            Instruction::Snd(a) => {
+                if let Some(c)=h_reg.get(&a) {
+                    last_sound_played=*c as u32;
+                }    
+            },
+            
             Instruction::Jgz(x, y) => {
                 match (&x,&y) {
                     (Data::Reg(a),Data::Val(b))=>{
@@ -127,5 +156,4 @@ fn solve_part1(input: &Vec<Instruction>) -> String {
         println!();
         pos+=1+jump;
     }
-"".to_string()
-}
+0}
