@@ -1,3 +1,4 @@
+workspace = { members = ["cpu"] }
 [package]
 name = "advent_of_code_2017"
 version = "0.1.0"

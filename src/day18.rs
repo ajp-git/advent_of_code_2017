@@ -5,7 +5,7 @@ use aoc_runner_derive::{aoc, aoc_generator};
 #[derive(Debug)]
 enum Data {
     Reg(char),
-    Val(i32),
+    Val(i64),
 }
 #[derive(Debug)]
 enum Instruction{
@@ -19,7 +19,7 @@ enum Instruction{
 }
 
 fn parse_ins_data(data: &str) -> Data {
-    if let Ok(val) = data.parse::<i32>() {
+    if let Ok(val) = data.parse::<i64>() {
         Data::Val(val)
     } else if let Some(reg) = data.chars().next() {
         Data::Reg(reg)
@@ -32,7 +32,7 @@ fn parse_ins_data(data: &str) -> Data {
 fn input_generator(input: &str) -> Vec<Instruction> {
     let mut v:Vec<Instruction>=Vec::new();
 
-    let input:&str="set a 1
+    /*let input:&str="set a 1
 add a 2
 mul a a
 mod a 5
@@ -41,7 +41,7 @@ set a 0
 rcv a
 jgz a -1
 set a 1
-jgz a -2";
+jgz a -2";*/
     for line in input.lines() {
         let parts:Vec<&str>=line.split_whitespace().collect();
 
@@ -64,21 +64,21 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
     let mut pos=0;
     let mut frequency:u32=0;
     let mut last_sound_played:u32=0;
-    let mut h_reg:HashMap<char,i32>=HashMap::new();
+    let mut h_reg:HashMap<char,i64>=HashMap::new();
 
     loop {
         if pos >= input.len(){
             break;
         }
-        let mut jump:i32=0;
-
+        let mut jump:i64=0;
+        println!("Line : {:?}", &input[pos]);
         match &input[pos] {
             Instruction::Add(x, y) => {
                 match (&x,&y) {
                     (Data::Reg(a),Data::Val(b))=>{
-                        let mut c=*b;
+                        let mut c=0;
                         if let Some(curr)=h_reg.get(&a){
-                            c+=curr;
+                            c+=curr+*b;
                         }
                         h_reg.insert(*a, c);
                     },
@@ -93,17 +93,31 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
                             let c = v_a % *b;
                             h_reg.insert(*a, c);                        }
                     },
+                    (Data::Reg(a),Data::Reg(b) ) => {
+                        if let Some(va)=h_reg.get(&a) {
+                            if let Some(b)= h_reg.get(&b) {
+                                h_reg.insert(*a,
+                                va%b
+                                );
+                            }
+                        }
+
+                    },
                     __=>panic!("unknown Mod instruction : {:?}", input[pos]),
                 }
             },
             Instruction::Mul(x, y) => {
                 match (&x,&y) {
                     (Data::Reg(a),Data::Val(b))=>{
-                        let mut c=*b;
+                        println!("### --- Ins::Mul reg, data : {:?} {:?}",a,b);
                         if let Some(curr)=h_reg.get(&a){
-                            c*=curr;
-                        } 
-                        h_reg.insert(*a, c);
+                            let c = curr*b;
+                            h_reg.insert(*a, c);
+                        } else {
+                            println!("{} not found", a);
+                            h_reg.insert(*a, 0);
+
+                        }
                     },
                     (Data::Reg(a),Data::Reg(b))=>{
                         if let Some(c)=h_reg.get(&a) {
@@ -167,7 +181,7 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
         println!("{:?}", h_reg);
         println!();
         if jump != 0 {
-            pos=(jump +pos as i32)as usize;
+            pos=(jump +pos as i64)as usize;
         } else {
             pos+=1;
         }  }
