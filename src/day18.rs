@@ -1,13 +1,24 @@
-use std::collections::HashMap;
+use std::{char, collections::HashMap};
 
 use aoc_runner_derive::{aoc, aoc_generator};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 enum Data {
     Reg(char),
     Val(i64),
 }
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+
+struct Register{
+    val:i64,
+}
+impl Register {
+    fn set(&mut self, val: i64){
+        self.val=val;
+    }
+}
+
+#[derive(Debug, Clone)]
 enum Instruction{
     Snd(char),
     Set(Data,Data),
@@ -18,6 +29,68 @@ enum Instruction{
     Jgz(Data,Data),
 }
 
+#[derive(Debug, Clone)]
+struct Cpu{
+    rom: Vec<Instruction>,
+    regs: Vec<Register>,
+    counter:i64,
+}
+
+impl Cpu {
+    fn new (rom:Vec<Instruction>) -> Self {
+        let mut regs:Vec<Register>=vec![Register{val:0};26];
+        Cpu { rom, regs, counter:0} 
+    }
+    fn run(&mut self) -> i64 {
+        
+        loop {
+            if self.counter>=self.rom.len() as i64{
+                return 0;
+            }
+            self.execute(self.rom[self.counter as usize].clone());
+
+        }
+    }
+    fn execute(&mut self, ins: Instruction){
+        match ins {
+            Instruction::Add(a, b) => {
+                println!("a and b Instruction Add {:?}", ins);
+                /*self.set(a,
+                    self.get(a)
+                    + self.get(b) as i64);*/
+            },
+            _ => panic!("Instruction not handlled {:?} ", ins),
+        }
+    }
+    fn get_pos(&mut self, a:char) -> usize {
+        let pos_a: u8 =b'a';
+        (a as i64 - pos_a as i64)as usize
+    }
+
+    fn set (&mut self, a: Data, b:Data){
+        match (a,b) {
+            (Data::Reg(a),Data::Reg(_b)) => {
+                let pos=self.get_pos(a);
+                self.regs[pos].val=self.get(b)
+            },
+            (Data::Reg(a),Data::Val(b)) => {
+                let pos = self.get_pos(a);
+                self.regs[pos].val=b;
+            },
+            _ => panic!("Can't write on val : {:?}", a),      
+        }
+    }
+
+    fn get (&mut self, a: Data) -> i64 {
+        match a {
+            Data::Val(a) => a,
+            Data::Reg(a) => {
+                let pos=self.get_pos(a);
+                self.regs[pos].val
+            }
+        }
+    }
+}
 fn parse_ins_data(data: &str) -> Data {
     if let Ok(val) = data.parse::<i64>() {
         Data::Val(val)
@@ -61,6 +134,10 @@ jgz a -2";*/
 
 #[aoc(day18, part1)]
 fn solve_part1(input: &Vec<Instruction>) -> u32 {
+    let mut cpu=Cpu::new(input.clone());
+    cpu.run();
+    if false {
+        
     let mut pos=0;
     let mut frequency:u32=0;
     let mut last_sound_played:u32=0;
@@ -185,4 +262,5 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
         } else {
             pos+=1;
         }  }
-0}
+
+    }0}
