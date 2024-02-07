@@ -53,6 +53,7 @@ fn input_generator(input: &str) -> Vec<Instruction> {
 #[aoc(day18, part1)]
 fn solve_part1(input: &Vec<Instruction>) -> String {
     let mut pos=0;
+    let mut frequency:u32=0;
     let mut h_reg:HashMap<char,i32>=HashMap::new();
 
     loop {
@@ -80,9 +81,7 @@ fn solve_part1(input: &Vec<Instruction>) -> String {
                         let mut c=*b;
                         if let Some(curr)=h_reg.get(&a){
                             c*=curr;
-                        } else {
-                            c=0;
-                        }
+                        } 
                         h_reg.insert(*a, c);
                     },
                     __=>panic!("unknown instruction : {:?}", input[pos]),
@@ -96,21 +95,36 @@ fn solve_part1(input: &Vec<Instruction>) -> String {
                     __=>panic!("unknown instruction : {:?}", input[pos]),
                 }
             },
+            Instruction::Rcv(a) => {
+                
+            },
 
-        Instruction::Jgz(x, y) => {
-            match (&x,&y) {
-                (Data::Reg(a),Data::Val(b))=>{
-                    if let Some (c) = h_reg.get(&a) {
-                        if *c > 0 {
-                            jump=*b as usize;
+            Instruction::Jgz(x, y) => {
+                match (&x,&y) {
+                    (Data::Reg(a),Data::Val(b))=>{
+                        if let Some (c) = h_reg.get(&a) {
+                            if *c > 0 {
+                                jump=*b as usize;
+                            }
                         }
-                    }
-                },
-                __=>panic!("unknown instruction : {:?}", input[pos]),
-            }
-        },
+                    },
+                    (Data::Reg(a),Data::Reg(b))=>{
+                        if let Some (c) = h_reg.get(&a) {
+                            if let Some(b) = h_reg.get(&b){
+                                if *c > 0 {
+                                    jump=*b as usize;
+                                }
+                            }
+                        }
+                    },
+                    __=>panic!("unknown Instruction::Jgz instruction : {:?}", input[pos]),
+                }
+            },
         __=>panic!("unknown instruction : {:?}", input[pos]),
-    }
+        }
+        println!("### --- pos+=1+jump;  {:?} \tpos {pos}\t{jump}", &input[pos]);
+        println!("{:?}", h_reg);
+        println!();
         pos+=1+jump;
     }
 "".to_string()
