@@ -70,7 +70,7 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
         if pos >= input.len(){
             break;
         }
-        let mut jump:usize=0;
+        let mut jump:i32=0;
 
         match &input[pos] {
             Instruction::Add(x, y) => {
@@ -83,6 +83,17 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
                         h_reg.insert(*a, c);
                     },
                     __=>panic!("unknown instruction : {:?}", input[pos]),
+                }
+            },
+            
+            Instruction::Mod(x, y) => {
+                match (&x,&y) {
+                    (Data::Reg(a),Data::Val(b))=>{
+                        if let Some (v_a) = h_reg.get(&a) {
+                            let c = v_a % *b;
+                            h_reg.insert(*a, c);                        }
+                    },
+                    __=>panic!("unknown Mod instruction : {:?}", input[pos]),
                 }
             },
             Instruction::Mul(x, y) => {
@@ -125,6 +136,7 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
             Instruction::Snd(a) => {
                 if let Some(c)=h_reg.get(&a) {
                     last_sound_played=*c as u32;
+                    println!("---------Playing sound {}\n", last_sound_played);
                 }    
             },
             
@@ -133,7 +145,7 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
                     (Data::Reg(a),Data::Val(b))=>{
                         if let Some (c) = h_reg.get(&a) {
                             if *c > 0 {
-                                jump=*b as usize;
+                                jump=*b;
                             }
                         }
                     },
@@ -141,7 +153,7 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
                         if let Some (c) = h_reg.get(&a) {
                             if let Some(b) = h_reg.get(&b){
                                 if *c > 0 {
-                                    jump=*b as usize;
+                                    jump=*b;
                                 }
                             }
                         }
@@ -154,6 +166,9 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
         println!("### --- pos+=1+jump;  {:?} \tpos {pos}\t{jump}", &input[pos]);
         println!("{:?}", h_reg);
         println!();
-        pos+=1+jump;
-    }
+        if jump != 0 {
+            pos=(jump +pos as i32)as usize;
+        } else {
+            pos+=1;
+        }  }
 0}
