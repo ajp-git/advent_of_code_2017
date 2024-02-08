@@ -1,21 +1,20 @@
+use std::thread::{self, sleep};
+use std::time::Duration;
 use std::{char};
 use std::sync::mpsc::{self, Sender, Receiver};
-
-
 use aoc_runner_derive::{aoc, aoc_generator};
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 enum Data {
     Reg(char),
     Val(i64),
 }
-#[derive(Debug, Clone)]
-
+#[derive(Debug,Clone)]
 struct Register{
     val:i64,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 enum Instruction{
     Snd(Data),
     Set(Data,Data),
@@ -28,26 +27,40 @@ enum Instruction{
 
 #[derive(Debug)]
 struct Cpu{
+    id: u32,
     rom: Vec<Instruction>,
     regs: Vec<Register>,
     counter:i64,
     last_sound:i64,
     receiver:Receiver<i64>,
     sender:Sender<i64>,
+    sent_counter:i64,
 }
 
 impl Cpu {
-    fn new (rom:Vec<Instruction>, sender:Sender<i64>, receiver:Receiver<i64>) -> Self {
-        let regs:Vec<Register>=vec![Register{val:0};26];
-        Cpu { rom, regs, counter:0, last_sound:0, sender, receiver} 
+    fn new (id: u32, rom:Vec<Instruction>, sender:Sender<i64>, receiver:Receiver<i64>) -> Self {
+        
+        let mut cpu = Cpu{
+            id,
+            rom,
+            regs:vec![Register{val:0};26],
+            counter:0,
+            last_sound:-1,
+            receiver,
+            sender,
+            sent_counter:0,
+        };
+
+        cpu.set_val(Data::Reg('p'), id as i64);
+        cpu
     }
     fn run(&mut self) -> i64 {
-        
+        println!("Rom launched on cpu");
         loop {
             if self.counter>=self.rom.len() as i64{
                 return 0;
             }
-            let ret = self.execute(self.rom[self.counter as usize]);
+            let ret = self.execute(&self.rom[self.counter as usize].clone());
             if ret>0{
                 return ret;
             }
@@ -55,57 +68,72 @@ impl Cpu {
 
         }
     }
-    fn execute(&mut self, ins: Instruction) -> i64{
-        self.display_registers();
-        println!("{ins:?}");
+    fn execute(&mut self, ins: &Instruction) -> i64{
         match ins {
             Instruction::Add(a, b) => {
-                let val_a: i64=self.get(a);
-                let val_b: i64=self.get(b);
-                self.set_val(a,
+                let val_a: i64=self.get(a.clone());
+                let val_b: i64=self.get(b.clone());
+                self.set_val(a.clone(),
                     val_b+val_a,
                 );
             },
             Instruction::Set(a,b ) => {
-                let val_b: i64=self.get(b);
-                self.set_val(a,
+                let val_b: i64=self.get(b.clone());
+                self.set_val(a.clone(),
                     val_b,
                 );
 
             },
             Instruction::Mul(a,b ) => {
-                let val_a: i64=self.get(a);
-                let val_b: i64=self.get(b);
-                self.set_val(a,
+                let val_a: i64=self.get(a.clone());
+                let val_b: i64=self.get(b.clone());
+                self.set_val(a.clone(),
                     val_a * val_b,
                 );
 
             },
             Instruction::Mod(a,b ) => {
-                let val_a: i64=self.get(a);
-                let val_b: i64=self.get(b);
-                self.set_val(a,
+                let val_a: i64=self.get(a.clone());
+                let val_b: i64=self.get(b.clone());
+                self.set_val(a.clone(),
                     val_a % val_b,
                 );
             },
             Instruction::Jgz(a,b ) => {
-                let val_a: i64=self.get(a);
-                let val_b: i64=self.get(b);
+                let val_a: i64=self.get(a.clone());
+                let val_b: i64=self.get(b.clone());
                 if val_a>0{
                     self.counter+=val_b-1;
                 }
             },    
             Instruction::Snd(a ) => {
-                let val_a: i64=self.get(a);
-                println!("Playing sound {}",val_a);
-                self.last_sound=val_a;
+                //self.display_registers();
+                let mut id_tab="\t".repeat(self.id as usize);
+                id_tab+=format!(" {}  ", self.id).as_str();
+                //println!("{}{ins:?}",id_tab);
+                let val_a: i64=self.get(a.clone());
+                self.sender.send(val_a).expect("Failed to send value");
+                self.sent_counter+=1;
+                println!("{}Send value {}, counter :{}",id_tab, val_a, self.sent_counter);
+
+                sleep(Duration::from_millis(5));
+
             },
-            Instruction::Rcv(a ) => {
-                let val_a: i64=self.get(a);
-                println!("{} should be > 0",val_a);
-                if val_a>0{
-                    println!("And last sound {}",self.last_sound);
-                    return self.last_sound;    
+            Instruction::Rcv(a) => {
+                let mut id_tab="\t".repeat(self.id as usize);
+                id_tab+=format!(" {}  ", self.id).as_str();
+                
+                if let Ok(val) = self.receiver.recv_timeout(Duration::from_secs(10)) {
+                    //println!("{}{ins:?}",id_tab);
+
+                    //println!("{}Received value {}",id_tab, val);
+                    self.set_val(a.clone(), val);
+                } else {
+                    println!("Other CPU has stopped sending data.");
+                    println!("{} Sent_counter {}",id_tab, self.sent_counter);
+
+                    // Handle the case where the other CPU has stopped
+                    return self.sent_counter;
                 }
             },
         }
@@ -122,24 +150,9 @@ impl Cpu {
                 let pos = self.get_pos(a);
                 self.regs[pos].val=b;
             },
-            _ => panic!("Can't write on val : {:?}", a),      
+            _ => panic!("Can't write on val"),      
         }
     }
-
-    /*fn set_data (&mut self, a: Data, b:Data){
-        match (a,b) {
-            (Data::Reg(a),Data::Reg(_b)) => {
-                let pos=self.get_pos(a);
-                self.regs[pos].val=self.get(b)
-            },
-            (Data::Reg(a),Data::Val(b)) => {
-                let pos = self.get_pos(a);
-                self.regs[pos].val=b;
-            },
-            _ => panic!("Can't write on val : {:?}", a),      
-        }
-    }*/
-
     fn get (&mut self, a: Data) -> i64 {
         match a {
             Data::Val(a) => a,
@@ -157,7 +170,6 @@ impl Cpu {
             print!("{r} : {} -- ",self.get(Data::Reg(r)));
         }
         println!();
-
     }
 }
 fn parse_ins_data(data: &str) -> Data {
@@ -184,6 +196,14 @@ rcv a
 jgz a -1
 set a 1
 jgz a -2";*/
+/*let input="snd 1
+snd 2
+snd p
+rcv a
+rcv b
+rcv c
+rcv d";*/
+    
     for line in input.lines() {
         let parts:Vec<&str>=line.split_whitespace().collect();
 
@@ -200,10 +220,8 @@ jgz a -2";*/
     }
     v
 }
-
-
 #[aoc(day18, part1)]
-fn solve_part1(input:&[Instruction]) -> i64 {
+fn solve_part1(_input:&[Instruction]) -> i64 {
 0}
 
 #[aoc(day18, part2)]
@@ -211,12 +229,29 @@ fn solve_part2(input:&Vec<Instruction>) -> i64 {
     // Create channels
     let (tx1, rx1) = mpsc::channel();
     let (tx2,rx2) = mpsc::channel();
-    let input_1=input.iter().map(|f| *f.clone()).collect::<Vec<Instruction>>();
-    let input_2=input.iter().map(|f| *f.clone()).collect::<Vec<Instruction>>();
+    let input_1=input.clone();
 
-    let mut cpu_1=Cpu::new(input_1, tx1, rx2);
-    let mut cpu_2=Cpu::new(input_2, tx2, rx1);
-    
-    cpu.run()
-}
+    let mut cpu_1=Cpu::new(0, input_1.clone(), tx1, rx2);
+    let mut cpu_2=Cpu::new(1, input_1, tx2, rx1);
+
+    let handle_1=thread::spawn(move || {
+        println!("Running cpu 1");
+        cpu_1.run();
+    });
+
+    let handle_2=thread::spawn(move || {
+        println!("Running cpu 1");
+        cpu_2.run();
+    });
+    // Wait for both threads to finish
+    // Wait for both threads to finish and collect their return values
+    let ret1 = handle_1.join().expect("CPU 1 thread has panicked");
+    let ret2 = handle_2.join().expect("CPU 2 thread has panicked");
+
+    // Now you have the return values from both threads
+    println!("Return value from CPU 1: {}", -1);
+    println!("Return value from CPU 2: {}", -1);
+
+    return -1;
+    }
 
