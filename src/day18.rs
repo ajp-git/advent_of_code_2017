@@ -1,6 +1,7 @@
 #![deny(clippy::all)]
 #![deny(warnings)]
 
+use std::collections::HashMap;
 use std::thread::{self};
 use std::time::Duration;
 use std::char;
@@ -11,10 +12,6 @@ use aoc_runner_derive::{aoc, aoc_generator};
 enum Data {
     Reg(char),
     Val(i64),
-}
-#[derive(Debug,Clone)]
-struct Register{
-    val:i64,
 }
 
 #[derive(Debug,Clone)]
@@ -32,7 +29,7 @@ enum Instruction{
 struct Cpu{
     id: u32,
     rom: Vec<Instruction>,
-    regs: Vec<Register>,
+    regs: HashMap<char,i64>,
     counter:i64,
     receiver:Receiver<i64>,
     sender:Sender<i64>,
@@ -42,10 +39,12 @@ struct Cpu{
 impl Cpu {
     fn new (id: u32, rom:Vec<Instruction>, sender:Sender<i64>, receiver:Receiver<i64>) -> Self {
         
+        let mut regs:HashMap<char, i64>=HashMap::new();
+        regs.insert('p', id as i64);
         let mut cpu = Cpu{
             id,
             rom,
-            regs:vec![Register{val:0};26],
+            regs,
             counter:0,
             receiver,
             sender,
@@ -115,7 +114,7 @@ impl Cpu {
                 let val_a: i64=self.get(a.clone());
                 self.sender.send(val_a).expect("Failed to send value");
                 self.sent_counter+=1;
-                if self.id==1 {
+                if self.id==2 {
                     println!("{}Send value {}, counter :{}",id_tab, val_a, self.sent_counter);                    
                 }
             },
@@ -123,7 +122,7 @@ impl Cpu {
                 let mut id_tab="\t".repeat(self.id as usize);
                 id_tab+=format!(" {}  ", self.id).as_str();
                 
-                if let Ok(val) = self.receiver.recv_timeout(Duration::from_secs(5)) {
+                if let Ok(val) = self.receiver.recv_timeout(Duration::from_millis(40)) {
                     self.set_val(a.clone(), val);
                 } else {
                     println!("Other CPU has stopped sending data.");
@@ -134,27 +133,19 @@ impl Cpu {
         }
         0
     }
-    fn get_pos(&self, a:char) -> usize {
-        let pos_a: u8 =b'a';
-        (a as i64 - pos_a as i64)as usize
-    }
 
     fn set_val (&mut self, a: Data, b:i64){
-        match (a,b) {
-            (Data::Reg(a),b) => {
-                let pos = self.get_pos(a);
-                self.regs[pos].val=b;
-            },
-            _ => panic!("Can't write on val"),      
+        if let Data::Reg(reg) = a {
+            self.regs.insert(reg, b);
         }
     }
     fn get (&self, a: Data) -> i64 {
         match a {
             Data::Val(a) => a,
             Data::Reg(a) => {
-                let pos=self.get_pos(a);
-                self.regs[pos].val
-            }
+                // Retrieve the value for the register key from the HashMap
+                // If the register is not present, return 0 as the default value
+                *self.regs.get(&a).unwrap_or(&0)            }
         }
     }
     #[allow(dead_code)]
