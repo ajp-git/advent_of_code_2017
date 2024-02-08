@@ -31,7 +31,6 @@ struct Cpu{
     rom: Vec<Instruction>,
     regs: Vec<Register>,
     counter:i64,
-    last_sound:i64,
     receiver:Receiver<i64>,
     sender:Sender<i64>,
     sent_counter:i64,
@@ -45,7 +44,6 @@ impl Cpu {
             rom,
             regs:vec![Register{val:0};26],
             counter:0,
-            last_sound:-1,
             receiver,
             sender,
             sent_counter:0,
@@ -116,24 +114,19 @@ impl Cpu {
                 self.sent_counter+=1;
                 println!("{}Send value {}, counter :{}",id_tab, val_a, self.sent_counter);
 
-                sleep(Duration::from_millis(5));
+                sleep(Duration::from_millis(1));
 
             },
             Instruction::Rcv(a) => {
                 let mut id_tab="\t".repeat(self.id as usize);
                 id_tab+=format!(" {}  ", self.id).as_str();
                 
-                if let Ok(val) = self.receiver.recv_timeout(Duration::from_secs(10)) {
-                    //println!("{}{ins:?}",id_tab);
-
-                    //println!("{}Received value {}",id_tab, val);
+                if let Ok(val) = self.receiver.recv_timeout(Duration::from_secs(5)) {
                     self.set_val(a.clone(), val);
                 } else {
                     println!("Other CPU has stopped sending data.");
                     println!("{} Sent_counter {}",id_tab, self.sent_counter);
-
-                    // Handle the case where the other CPU has stopped
-                    return self.sent_counter;
+                    return self.sent_counter; // todo, doesn't return value -1 , handle_1.join().expect returns () instead of i64
                 }
             },
         }
@@ -162,6 +155,7 @@ impl Cpu {
             }
         }
     }
+    #[allow(dead_code)]
     fn display_registers(&mut self){
         for r in 'a'..='p' {
             if r=='h'{
@@ -234,14 +228,17 @@ fn solve_part2(input:&Vec<Instruction>) -> i64 {
     let mut cpu_1=Cpu::new(0, input_1.clone(), tx1, rx2);
     let mut cpu_2=Cpu::new(1, input_1, tx2, rx1);
 
-    let handle_1=thread::spawn(move || {
+
+    let builder = thread::Builder::new();
+
+    let handle_1: thread::JoinHandle<_> = builder.spawn(move || {
         println!("Running cpu 1");
-        cpu_1.run();
-    });
+        cpu_1.run()
+    }).unwrap();
 
     let handle_2=thread::spawn(move || {
         println!("Running cpu 1");
-        cpu_2.run();
+        cpu_2.run()
     });
     // Wait for both threads to finish
     // Wait for both threads to finish and collect their return values
@@ -249,9 +246,9 @@ fn solve_part2(input:&Vec<Instruction>) -> i64 {
     let ret2 = handle_2.join().expect("CPU 2 thread has panicked");
 
     // Now you have the return values from both threads
-    println!("Return value from CPU 1: {}", -1);
-    println!("Return value from CPU 2: {}", -1);
+    println!("Return value from CPU 1: {}", ret1);
+    println!("Return value from CPU 2: {}", ret2);
 
-    return -1;
+    ret2
     }
 
