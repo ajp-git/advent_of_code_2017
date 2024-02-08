@@ -47,27 +47,55 @@ impl Cpu {
             if self.counter>=self.rom.len() as i64{
                 return 0;
             }
-            self.execute(self.rom[self.counter as usize].clone());
+            self.counter=self.execute(self.rom[self.counter as usize].clone());
 
         }
     }
-    fn execute(&mut self, ins: Instruction){
+    fn execute(&mut self, ins: Instruction) -> i64{
         match ins {
             Instruction::Add(a, b) => {
-                println!("a and b Instruction Add {:?}", ins);
-                /*self.set(a,
-                    self.get(a)
-                    + self.get(b) as i64);*/
+                let val_a: i64=self.get(a).clone();
+                let val_b: i64=self.get(b).clone();
+                self.set_val(a,
+                    val_b+val_a,
+                );
             },
-            _ => panic!("Instruction not handlled {:?} ", ins),
+            Instruction::Set(a,b ) => {
+                let val_a: i64=self.get(a).clone();
+                let val_b: i64=self.get(b).clone();
+                self.set_val(a,
+                    val_b,
+                );
+
+            }
+            Instruction::Mul(a,b ) => {
+                let val_a: i64=self.get(a).clone();
+                let val_b: i64=self.get(b).clone();
+                self.set_val(a,
+                    val_b*val_a,
+                );
+
+            }
+            _ => println!("Instruction not handled {:?} ", ins),
         }
+        self.counter+1
     }
     fn get_pos(&mut self, a:char) -> usize {
         let pos_a: u8 =b'a';
         (a as i64 - pos_a as i64)as usize
     }
 
-    fn set (&mut self, a: Data, b:Data){
+    fn set_val (&mut self, a: Data, b:i64){
+        match (a,b) {
+            (Data::Reg(a),b) => {
+                let pos = self.get_pos(a);
+                self.regs[pos].val=b;
+            },
+            _ => panic!("Can't write on val : {:?}", a),      
+        }
+    }
+
+    fn set_data (&mut self, a: Data, b:Data){
         match (a,b) {
             (Data::Reg(a),Data::Reg(_b)) => {
                 let pos=self.get_pos(a);
