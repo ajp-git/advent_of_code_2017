@@ -1,74 +1,131 @@
-#![deny(clippy::all)]
-#![deny(warnings)]
+// This module simulates a dual-core CPU execution environment where each CPU can send and receive
+// signals to and from each other. It is designed to solve a puzzle from Advent of Code.
 
+// Standard library imports for data structures, threading, timing, and inter-thread communication.
 use std::collections::HashMap;
-use std::thread::{self};
+use std::thread;
 use std::time::Duration;
-use std::char;
 use std::sync::mpsc::{self, Sender, Receiver};
 use aoc_runner_derive::{aoc, aoc_generator};
 
-#[derive(Debug,Clone)]
+// Data enum represents a CPU register or a direct value.
+#[derive(Debug, Clone)]
 enum Data {
     Reg(char),
     Val(i64),
 }
 
-#[derive(Debug,Clone)]
-enum Instruction{
+// Instruction enum represents the different operations that the CPU can perform.
+#[derive(Debug, Clone)]
+enum Instruction {
     Snd(Data),
-    Set(Data,Data),
-    Add(Data,Data),
+    Set(Data, Data),
+    Add(Data, Data),
     Mul(Data, Data),
-    Mod(Data,Data),
+    Mod(Data, Data),
     Rcv(Data),
-    Jgz(Data,Data),
+    Jgz(Data, Data),
 }
 
+/// Represents a single CPU within a simulated dual-core environment.
+///
+/// The `Cpu` struct is designed to execute a set of instructions (`rom`) and manage its own
+/// set of registers (`regs`). It also includes functionality for sending and receiving signals
+/// to and from other CPUs via inter-thread communication channels (`sender` and `receiver`).
+///
+/// Each `Cpu` has a unique identifier (`id`), an instruction pointer (`counter`), and a count
+/// of the number of signals it has sent (`sent_counter`).
+///
+/// # Examples
+///
+/// ```
+/// // Example of creating a new Cpu and running its program.
+/// let (sender, receiver) = std::sync::mpsc::channel();
+/// let instructions = vec![]; // Vector of Instruction enums representing the program.
+/// let mut cpu = Cpu::new(0, instructions, sender, receiver);
+/// cpu.run();
+/// ```
+///
+/// # Fields
+///
+/// - `id`: The unique identifier for the CPU, typically used for differentiating between CPUs in a multi-core setup.
+/// - `rom`: A vector of `Instruction` enums representing the program loaded into the CPU's read-only memory.
+/// - `regs`: A hashmap representing the CPU's registers, where each key is a character corresponding to the register name.
+/// - `counter`: An instruction pointer that tracks the current position within the `rom`.
+/// - `receiver`: The receiving end of a channel for inter-CPU communication, used to receive signals from other CPUs.
+/// - `sender`: The sending end of a channel for inter-CPU communication, used to send signals to other CPUs.
+/// - `sent_counter`: A count of the number of signals this CPU has sent, used for debugging or specific program logic.
 #[derive(Debug)]
-struct Cpu{
-    id: u32,
-    rom: Vec<Instruction>,
-    regs: HashMap<char,i64>,
-    counter:i64,
-    receiver:Receiver<i64>,
-    sender:Sender<i64>,
-    sent_counter:i64,
+pub struct Cpu {
+    pub id: u32,
+    pub rom: Vec<Instruction>,
+    pub regs: HashMap<char, i64>,
+    pub counter: i64,
+    pub receiver: Receiver<i64>,
+    pub sender: Sender<i64>,
+    pub sent_counter: i64,
 }
+
 
 impl Cpu {
-    fn new (id: u32, rom:Vec<Instruction>, sender:Sender<i64>, receiver:Receiver<i64>) -> Self {
-        
-        let mut regs:HashMap<char, i64>=HashMap::new();
-        regs.insert('p', id as i64);
-        let mut cpu = Cpu{
-            id,
-            rom,
-            regs,
-            counter:0,
-            receiver,
-            sender,
-            sent_counter:0,
-        };
+/// Creates a new `Cpu` instance with the specified ID, program instructions, and communication channels.
+///
+/// This constructor initializes a `Cpu` with a given identifier, a set of instructions to execute,
+/// and channels for sending and receiving signals. It also sets up the initial state of the registers,
+/// including setting the 'p' register to the value of the CPU's ID.
+///
+/// # Parameters
+///
+/// - `id`: The unique identifier for the CPU. This is also used to initialize the 'p' register.
+/// - `rom`: A vector of `Instruction` that the CPU will execute.
+/// - `sender`: The sending end of a channel for inter-CPU communication.
+/// - `receiver`: The receiving end of a channel for inter-CPU communication.
+///
+/// # Returns
+///
+/// Returns a new `Cpu` instance ready to execute the provided instructions and communicate with other CPUs.
+///
+/// # Examples
+///
+/// ```
+/// let (sender, receiver) = std::sync::mpsc::channel();
+/// let instructions = vec![]; // Replace with actual instructions.
+/// let cpu = Cpu::new(0, instructions, sender, receiver);
+/// ```
+pub fn new(id: u32, rom: Vec<Instruction>, sender: Sender<i64>, receiver: Receiver<i64>) -> Self {
+    let mut regs: HashMap<char, i64> = HashMap::new();
+    regs.insert('p', id as i64);
+    let cpu = Cpu {
+        id,
+        rom,
+        regs,
+        counter: 0,
+        receiver,
+        sender,
+        sent_counter: 0,
+    };
 
-        cpu.set_val(Data::Reg('p'), id as i64);
-        cpu
-    }
-    fn run(&mut self) -> i64 {
+    cpu
+}
+    /// Runs the CPU's program until it completes or a condition causes it to exit early.
+    pub fn run(&mut self) -> i64 {
         println!("Rom launched on cpu");
         loop {
-            if self.counter>=self.rom.len() as i64{
+            if self.counter >= self.rom.len() as i64 {
                 return 0;
             }
             let ret = self.execute(&self.rom[self.counter as usize].clone());
-            if ret>0{
+            if ret > 0 {
                 return ret;
             }
-            self.counter+=1;
-
+            self.counter += 1;
         }
     }
-    fn execute(&mut self, ins: &Instruction) -> i64{
+
+    // Executes a single instruction and updates the CPU's state accordingly.
+    pub fn execute(&mut self, ins: &Instruction) -> i64 {
+        // Match on the type of instruction and perform the corresponding operation.
+
         match ins {
             Instruction::Add(a, b) => {
                 let val_a: i64=self.get(a.clone());
