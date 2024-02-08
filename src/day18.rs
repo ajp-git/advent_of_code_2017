@@ -1,4 +1,4 @@
-use std::thread::{self, sleep};
+use std::thread::{self};
 use std::time::Duration;
 use std::{char};
 use std::sync::mpsc::{self, Sender, Receiver};
@@ -218,11 +218,11 @@ fn solve_part1(_input:&[Instruction]) -> i64 {
 0}
 
 #[aoc(day18, part2)]
-fn solve_part2(input:&Vec<Instruction>) -> i64 {
+fn solve_part2(input:&[Instruction]) -> i64 {
     // Create channels
     let (tx1, rx1) = mpsc::channel();
     let (tx2,rx2) = mpsc::channel();
-    let input_1=input.clone();
+    let input_1=input.to_owned();
 
     let mut cpu_1=Cpu::new(0, input_1.clone(), tx1, rx2);
     let mut cpu_2=Cpu::new(1, input_1, tx2, rx1);
