@@ -1,6 +1,9 @@
+#![deny(clippy::all)]
+#![deny(warnings)]
+
 use std::thread::{self};
 use std::time::Duration;
-use std::{char};
+use std::char;
 use std::sync::mpsc::{self, Sender, Receiver};
 use aoc_runner_derive::{aoc, aoc_generator};
 
@@ -131,7 +134,7 @@ impl Cpu {
         }
         0
     }
-    fn get_pos(&mut self, a:char) -> usize {
+    fn get_pos(&self, a:char) -> usize {
         let pos_a: u8 =b'a';
         (a as i64 - pos_a as i64)as usize
     }
@@ -145,7 +148,7 @@ impl Cpu {
             _ => panic!("Can't write on val"),      
         }
     }
-    fn get (&mut self, a: Data) -> i64 {
+    fn get (&self, a: Data) -> i64 {
         match a {
             Data::Val(a) => a,
             Data::Reg(a) => {
@@ -189,7 +192,7 @@ rcv a
 jgz a -1
 set a 1
 jgz a -2";*/
-/*let input="snd 1
+    /*let input="snd 1
 snd 2
 snd p
 rcv a
