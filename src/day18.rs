@@ -4,7 +4,7 @@ use std::sync::mpsc::{self, Sender, Receiver};
 
 use aoc_runner_derive::{aoc, aoc_generator};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 enum Data {
     Reg(char),
     Val(i64),
@@ -15,7 +15,7 @@ struct Register{
     val:i64,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 enum Instruction{
     Snd(Data),
     Set(Data,Data),
@@ -26,18 +26,20 @@ enum Instruction{
     Jgz(Data,Data),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct Cpu{
     rom: Vec<Instruction>,
     regs: Vec<Register>,
     counter:i64,
     last_sound:i64,
+    receiver:Receiver<i64>,
+    sender:Sender<i64>,
 }
 
 impl Cpu {
-    fn new (rom:Vec<Instruction>) -> Self {
+    fn new (rom:Vec<Instruction>, sender:Sender<i64>, receiver:Receiver<i64>) -> Self {
         let regs:Vec<Register>=vec![Register{val:0};26];
-        Cpu { rom, regs, counter:0, last_sound:0} 
+        Cpu { rom, regs, counter:0, last_sound:0, sender, receiver} 
     }
     fn run(&mut self) -> i64 {
         
@@ -45,7 +47,7 @@ impl Cpu {
             if self.counter>=self.rom.len() as i64{
                 return 0;
             }
-            let ret = self.execute(self.rom[self.counter as usize].clone());
+            let ret = self.execute(self.rom[self.counter as usize]);
             if ret>0{
                 return ret;
             }
@@ -199,8 +201,22 @@ jgz a -2";*/
     v
 }
 
+
 #[aoc(day18, part1)]
 fn solve_part1(input:&[Instruction]) -> i64 {
-    let mut cpu=Cpu::new(input.to_owned());
+0}
+
+#[aoc(day18, part2)]
+fn solve_part2(input:&Vec<Instruction>) -> i64 {
+    // Create channels
+    let (tx1, rx1) = mpsc::channel();
+    let (tx2,rx2) = mpsc::channel();
+    let input_1=input.iter().map(|f| *f.clone()).collect::<Vec<Instruction>>();
+    let input_2=input.iter().map(|f| *f.clone()).collect::<Vec<Instruction>>();
+
+    let mut cpu_1=Cpu::new(input_1, tx1, rx2);
+    let mut cpu_2=Cpu::new(input_2, tx2, rx1);
+    
     cpu.run()
 }
+
