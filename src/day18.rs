@@ -1,4 +1,6 @@
 use std::{char};
+use std::sync::mpsc::{self, Sender, Receiver};
+
 
 use aoc_runner_derive::{aoc, aoc_generator};
 
