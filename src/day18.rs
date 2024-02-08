@@ -1,4 +1,4 @@
-use std::{char, collections::HashMap};
+use std::{char};
 
 use aoc_runner_derive::{aoc, aoc_generator};
 
@@ -11,11 +11,6 @@ enum Data {
 
 struct Register{
     val:i64,
-}
-impl Register {
-    fn set(&mut self, val: i64){
-        self.val=val;
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -39,7 +34,7 @@ struct Cpu{
 
 impl Cpu {
     fn new (rom:Vec<Instruction>) -> Self {
-        let mut regs:Vec<Register>=vec![Register{val:0};26];
+        let regs:Vec<Register>=vec![Register{val:0};26];
         Cpu { rom, regs, counter:0, last_sound:0} 
     }
     fn run(&mut self) -> i64 {
@@ -48,7 +43,11 @@ impl Cpu {
             if self.counter>=self.rom.len() as i64{
                 return 0;
             }
-            self.counter=self.execute(self.rom[self.counter as usize].clone());
+            let ret = self.execute(self.rom[self.counter as usize].clone());
+            if ret>0{
+                return ret;
+            }
+            self.counter+=1;
 
         }
     }
@@ -57,63 +56,56 @@ impl Cpu {
         println!("{ins:?}");
         match ins {
             Instruction::Add(a, b) => {
-                let val_a: i64=self.get(a).clone();
-                let val_b: i64=self.get(b).clone();
+                let val_a: i64=self.get(a);
+                let val_b: i64=self.get(b);
                 self.set_val(a,
                     val_b+val_a,
                 );
             },
             Instruction::Set(a,b ) => {
-                let val_a: i64=self.get(a).clone();
-                let val_b: i64=self.get(b).clone();
+                let val_b: i64=self.get(b);
                 self.set_val(a,
                     val_b,
                 );
 
             },
             Instruction::Mul(a,b ) => {
-                let val_a: i64=self.get(a).clone();
-                let val_b: i64=self.get(b).clone();
+                let val_a: i64=self.get(a);
+                let val_b: i64=self.get(b);
                 self.set_val(a,
                     val_a * val_b,
                 );
 
             },
-
             Instruction::Mod(a,b ) => {
-                let val_a: i64=self.get(a).clone();
-                let val_b: i64=self.get(b).clone();
+                let val_a: i64=self.get(a);
+                let val_b: i64=self.get(b);
                 self.set_val(a,
                     val_a % val_b,
                 );
             },
-            
             Instruction::Jgz(a,b ) => {
-                let val_a: i64=self.get(a).clone();
-                let val_b: i64=self.get(b).clone();
+                let val_a: i64=self.get(a);
+                let val_b: i64=self.get(b);
                 if val_a>0{
                     self.counter+=val_b-1;
                 }
-            },
-            
+            },    
             Instruction::Snd(a ) => {
-                let val_a: i64=self.get(a).clone();
+                let val_a: i64=self.get(a);
                 println!("Playing sound {}",val_a);
                 self.last_sound=val_a;
             },
-            
             Instruction::Rcv(a ) => {
-                let val_a: i64=self.get(a).clone();
+                let val_a: i64=self.get(a);
                 println!("{} should be > 0",val_a);
                 if val_a>0{
                     println!("And last sound {}",self.last_sound);
-                    panic!();    
+                    return self.last_sound;    
                 }
             },
-            
-            _ => println!("Instruction not handled {:?} ", ins),
         }
-        self.counter+1
+        0
     }
     fn get_pos(&mut self, a:char) -> usize {
         let pos_a: u8 =b'a';
@@ -130,7 +122,7 @@ impl Cpu {
         }
     }
 
-    fn set_data (&mut self, a: Data, b:Data){
+    /*fn set_data (&mut self, a: Data, b:Data){
         match (a,b) {
             (Data::Reg(a),Data::Reg(_b)) => {
                 let pos=self.get_pos(a);
@@ -142,7 +134,7 @@ impl Cpu {
             },
             _ => panic!("Can't write on val : {:?}", a),      
         }
-    }
+    }*/
 
     fn get (&mut self, a: Data) -> i64 {
         match a {
@@ -192,13 +184,13 @@ jgz a -2";*/
         let parts:Vec<&str>=line.split_whitespace().collect();
 
         match parts.as_slice() {
-            ["snd", x] => v.push(Instruction::Snd(parse_ins_data(&x))),
-            ["add",x,y] => v.push(Instruction::Add(parse_ins_data(&x), parse_ins_data(&y))),
-            ["set",x,y] => v.push(Instruction::Set(parse_ins_data(&x), parse_ins_data(&y))),
-            ["mul",x,y] => v.push(Instruction::Mul(parse_ins_data(&x), parse_ins_data(&y))),
-            ["mod",x,y] => v.push(Instruction::Mod(parse_ins_data(&x), parse_ins_data(&y))),
-            ["jgz",x,y] => v.push(Instruction::Jgz(parse_ins_data(&x), parse_ins_data(&y))),
-            ["rcv", x] => v.push(Instruction::Rcv(parse_ins_data(&x))),
+            ["snd", x] => v.push(Instruction::Snd(parse_ins_data(x))),
+            ["add",x,y] => v.push(Instruction::Add(parse_ins_data(x), parse_ins_data(y))),
+            ["set",x,y] => v.push(Instruction::Set(parse_ins_data(x), parse_ins_data(y))),
+            ["mul",x,y] => v.push(Instruction::Mul(parse_ins_data(x), parse_ins_data(y))),
+            ["mod",x,y] => v.push(Instruction::Mod(parse_ins_data(x), parse_ins_data(y))),
+            ["jgz",x,y] => v.push(Instruction::Jgz(parse_ins_data(x), parse_ins_data(y))),
+            ["rcv", x] => v.push(Instruction::Rcv(parse_ins_data(x))),
             _ => panic!("Unknown instruction {line}"),
         }
     }
@@ -206,136 +198,7 @@ jgz a -2";*/
 }
 
 #[aoc(day18, part1)]
-fn solve_part1(input: &Vec<Instruction>) -> u32 {
-    let mut cpu=Cpu::new(input.clone());
-    cpu.run();
-    if false {
-        
-    let mut pos=0;
-    let mut frequency:u32=0;
-    let mut last_sound_played:u32=0;
-    let mut h_reg:HashMap<char,i64>=HashMap::new();
-
-    loop {
-        if pos >= input.len(){
-            break;
-        }
-        let mut jump:i64=0;
-        println!("Line : {:?}", &input[pos]);
-        match &input[pos] {
-            Instruction::Add(x, y) => {
-                match (&x,&y) {
-                    (Data::Reg(a),Data::Val(b))=>{
-                        let mut c=0;
-                        if let Some(curr)=h_reg.get(&a){
-                            c+=curr+*b;
-                        }
-                        h_reg.insert(*a, c);
-                    },
-                    __=>panic!("unknown instruction : {:?}", input[pos]),
-                }
-            },
-            
-            Instruction::Mod(x, y) => {
-                match (&x,&y) {
-                    (Data::Reg(a),Data::Val(b))=>{
-                        if let Some (v_a) = h_reg.get(&a) {
-                            let c = v_a % *b;
-                            h_reg.insert(*a, c);                        }
-                    },
-                    (Data::Reg(a),Data::Reg(b) ) => {
-                        if let Some(va)=h_reg.get(&a) {
-                            if let Some(b)= h_reg.get(&b) {
-                                h_reg.insert(*a,
-                                va%b
-                                );
-                            }
-                        }
-
-                    },
-                    __=>panic!("unknown Mod instruction : {:?}", input[pos]),
-                }
-            },
-            Instruction::Mul(x, y) => {
-                match (&x,&y) {
-                    (Data::Reg(a),Data::Val(b))=>{
-                        println!("### --- Ins::Mul reg, data : {:?} {:?}",a,b);
-                        if let Some(curr)=h_reg.get(&a){
-                            let c = curr*b;
-                            h_reg.insert(*a, c);
-                        } else {
-                            println!("{} not found", a);
-                            h_reg.insert(*a, 0);
-
-                        }
-                    },
-                    (Data::Reg(a),Data::Reg(b))=>{
-                        if let Some(c)=h_reg.get(&a) {
-                            if let Some(d) = h_reg.get(&b) {
-                                let c=c*d;
-                                h_reg.insert(*a, c);
-                            }
-                        }
-                    }
-                   
-                    __=>panic!("unknown instruction : {:?}", input[pos]),
-                }
-            },
-            Instruction::Set(x, y) => {
-                match (&x,&y) {
-                    (Data::Reg(a),Data::Val(b))=>{
-                        h_reg.insert(*a, *b);
-                    },
-                    __=>panic!("unknown instruction : {:?}", input[pos]),
-                }
-            },
-            Instruction::Rcv(a) => {
-                /*if let Some(c) = h_reg.get(&a) {
-                    if *c!=0 {
-                        return last_sound_played;
-                    }
-                }*/
-            },
-
-            Instruction::Snd(a) => {
-                /*
-                if let Some(c)=h_reg.get(&a) {
-                    last_sound_played=*c as u32;
-                    println!("---------Playing sound {}\n", last_sound_played);
-                } 
-                */   
-            },
-            
-            Instruction::Jgz(x, y) => {
-                match (&x,&y) {
-                    (Data::Reg(a),Data::Val(b))=>{
-                        if let Some (c) = h_reg.get(&a) {
-                            if *c > 0 {
-                                jump=*b;
-                            }
-                        }
-                    },
-                    (Data::Reg(a),Data::Reg(b))=>{
-                        if let Some (c) = h_reg.get(&a) {
-                            if let Some(b) = h_reg.get(&b){
-                                if *c > 0 {
-                                    jump=*b;
-                                }
-                            }
-                        }
-                    },
-                    __=>panic!("unknown Instruction::Jgz instruction : {:?}", input[pos]),
-                }
-            },
-        __=>panic!("unknown instruction : {:?}", input[pos]),
-        }
-        println!("### --- pos+=1+jump;  {:?} \tpos {pos}\t{jump}", &input[pos]);
-        println!("{:?}", h_reg);
-        println!();
-        if jump != 0 {
-            pos=(jump +pos as i64)as usize;
-        } else {
-            pos+=1;
-        }  }
-
-    }0}
+fn solve_part1(input:&[Instruction]) -> i64 {
+    let mut cpu=Cpu::new(input.to_owned());
+    cpu.run()
+}
