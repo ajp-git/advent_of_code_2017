@@ -20,12 +20,12 @@ impl Register {
 
 #[derive(Debug, Clone)]
 enum Instruction{
-    Snd(char),
+    Snd(Data),
     Set(Data,Data),
     Add(Data,Data),
     Mul(Data, Data),
     Mod(Data,Data),
-    Rcv(char),
+    Rcv(Data),
     Jgz(Data,Data),
 }
 
@@ -34,12 +34,13 @@ struct Cpu{
     rom: Vec<Instruction>,
     regs: Vec<Register>,
     counter:i64,
+    last_sound:i64,
 }
 
 impl Cpu {
     fn new (rom:Vec<Instruction>) -> Self {
         let mut regs:Vec<Register>=vec![Register{val:0};26];
-        Cpu { rom, regs, counter:0} 
+        Cpu { rom, regs, counter:0, last_sound:0} 
     }
     fn run(&mut self) -> i64 {
         
@@ -52,6 +53,8 @@ impl Cpu {
         }
     }
     fn execute(&mut self, ins: Instruction) -> i64{
+        self.display_registers();
+        println!("{ins:?}");
         match ins {
             Instruction::Add(a, b) => {
                 let val_a: i64=self.get(a).clone();
@@ -67,15 +70,47 @@ impl Cpu {
                     val_b,
                 );
 
-            }
+            },
             Instruction::Mul(a,b ) => {
                 let val_a: i64=self.get(a).clone();
                 let val_b: i64=self.get(b).clone();
                 self.set_val(a,
-                    val_b*val_a,
+                    val_a * val_b,
                 );
 
-            }
+            },
+
+            Instruction::Mod(a,b ) => {
+                let val_a: i64=self.get(a).clone();
+                let val_b: i64=self.get(b).clone();
+                self.set_val(a,
+                    val_a % val_b,
+                );
+            },
+            
+            Instruction::Jgz(a,b ) => {
+                let val_a: i64=self.get(a).clone();
+                let val_b: i64=self.get(b).clone();
+                if val_a>0{
+                    self.counter+=val_b-1;
+                }
+            },
+            
+            Instruction::Snd(a ) => {
+                let val_a: i64=self.get(a).clone();
+                println!("Playing sound {}",val_a);
+                self.last_sound=val_a;
+            },
+            
+            Instruction::Rcv(a ) => {
+                let val_a: i64=self.get(a).clone();
+                println!("{} should be > 0",val_a);
+                if val_a>0{
+                    println!("And last sound {}",self.last_sound);
+                    panic!();    
+                }
+            },
+            
             _ => println!("Instruction not handled {:?} ", ins),
         }
         self.counter+1
@@ -118,6 +153,16 @@ impl Cpu {
             }
         }
     }
+    fn display_registers(&mut self){
+        for r in 'a'..='p' {
+            if r=='h'{
+                println!();
+            }
+            print!("{r} : {} -- ",self.get(Data::Reg(r)));
+        }
+        println!();
+
+    }
 }
 fn parse_ins_data(data: &str) -> Data {
     if let Ok(val) = data.parse::<i64>() {
@@ -147,13 +192,13 @@ jgz a -2";*/
         let parts:Vec<&str>=line.split_whitespace().collect();
 
         match parts.as_slice() {
-            ["snd", x] => v.push(Instruction::Snd(x.chars().next().unwrap())),
+            ["snd", x] => v.push(Instruction::Snd(parse_ins_data(&x))),
             ["add",x,y] => v.push(Instruction::Add(parse_ins_data(&x), parse_ins_data(&y))),
             ["set",x,y] => v.push(Instruction::Set(parse_ins_data(&x), parse_ins_data(&y))),
             ["mul",x,y] => v.push(Instruction::Mul(parse_ins_data(&x), parse_ins_data(&y))),
             ["mod",x,y] => v.push(Instruction::Mod(parse_ins_data(&x), parse_ins_data(&y))),
             ["jgz",x,y] => v.push(Instruction::Jgz(parse_ins_data(&x), parse_ins_data(&y))),
-            ["rcv", x] => v.push(Instruction::Rcv(x.chars().next().unwrap())),
+            ["rcv", x] => v.push(Instruction::Rcv(parse_ins_data(&x))),
             _ => panic!("Unknown instruction {line}"),
         }
     }
@@ -245,18 +290,20 @@ fn solve_part1(input: &Vec<Instruction>) -> u32 {
                 }
             },
             Instruction::Rcv(a) => {
-                if let Some(c) = h_reg.get(&a) {
+                /*if let Some(c) = h_reg.get(&a) {
                     if *c!=0 {
                         return last_sound_played;
                     }
-                }
+                }*/
             },
 
             Instruction::Snd(a) => {
+                /*
                 if let Some(c)=h_reg.get(&a) {
                     last_sound_played=*c as u32;
                     println!("---------Playing sound {}\n", last_sound_played);
-                }    
+                } 
+                */   
             },
             
             Instruction::Jgz(x, y) => {
