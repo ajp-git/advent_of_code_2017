@@ -216,13 +216,49 @@ pub fn new(id: u32, rom: Vec<Instruction>, sender: Sender<i64>, receiver: Receiv
         println!();
     }
 }
-fn parse_ins_data(data: &str) -> Data {
+/// Parses a string slice into a `Data` enum.
+///
+/// This function takes a string slice that represents either an integer value
+/// or a register name and attempts to parse it into the corresponding `Data` variant.
+/// If the string can be parsed as an `i64` integer, it returns `Data::Val(val)`.
+/// If the string cannot be parsed as an integer but contains characters,
+/// it assumes the first character is a register name and returns `Data::Reg(reg)`.
+///
+/// # Arguments
+///
+/// * `data` - A string slice representing the data to parse.
+///
+/// # Returns
+///
+/// A `Data` enum variant corresponding to the parsed value: either `Data::Val` for integers
+/// or `Data::Reg` for register names.
+///
+/// # Panics
+///
+/// Panics if the input string is empty or cannot be parsed into either an integer or a register name.
+///
+/// # Examples
+///
+/// ```
+/// let value_data = parse_ins_data("42");
+/// assert_eq!(value_data, Data::Val(42));
+///
+/// let register_data = parse_ins_data("a");
+/// assert_eq!(register_data, Data::Reg('a'));
+/// ```
+///
+/// An invalid input, such as an empty string or a string that cannot be parsed, will cause a panic:
+///
+/// ```should_panic
+/// let invalid_data = parse_ins_data(""); // This will panic.
+/// ```
+pub fn parse_ins_data(data: &str) -> Data {
     if let Ok(val) = data.parse::<i64>() {
         Data::Val(val)
     } else if let Some(reg) = data.chars().next() {
         Data::Reg(reg)
     } else {
-        panic!("unknown data {}",data);
+        panic!("unknown data {}", data);
     }
 }
 
