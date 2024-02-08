@@ -112,10 +112,9 @@ impl Cpu {
                 let val_a: i64=self.get(a.clone());
                 self.sender.send(val_a).expect("Failed to send value");
                 self.sent_counter+=1;
-                println!("{}Send value {}, counter :{}",id_tab, val_a, self.sent_counter);
-
-                sleep(Duration::from_millis(1));
-
+                if self.id==1 {
+                    println!("{}Send value {}, counter :{}",id_tab, val_a, self.sent_counter);                    
+                }
             },
             Instruction::Rcv(a) => {
                 let mut id_tab="\t".repeat(self.id as usize);
