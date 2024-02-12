@@ -1,4 +1,5 @@
 use std::cmp::{max, min};
+use crossterm::{execute, terminal, ExecutableCommand};
 
 use aoc_runner_derive::{aoc, aoc_generator};
 
@@ -32,12 +33,88 @@ struct Network{
     grid:Vec<Vec<char>>,
 }
 */
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 struct Pos{
     x:i32,
     y:i32,
 }
 
+struct Maze {
+    grid:Vec<Vec<char>>,
+    pos_in:Option<Pos>,
+    pos_out:Option<Pos>,
+    min_path_len:Option<u32>,
+    pos_current:Pos,
+    current_dir:Direction,
+}
+
+impl Maze {
+    pub fn new (grid:&Vec<Vec<char>>) -> Self {
+        Maze{
+            grid:grid.clone(),
+            min_path_len:None,
+            pos_current:Pos{x:0, y:0},
+            current_dir:Direction::South,
+            pos_in:None,
+            pos_out:None
+        }
+    }
+
+    pub fn get_entry(&mut self) -> Option<Pos> {
+        for (x, &c) in self.grid[0].iter().enumerate(){
+            if c =='|' {
+                self.set_entry(Pos{x:x as i32, y:0});
+                return self.pos_in;
+            }
+        }
+        None
+    }
+    pub fn set_entry(&mut self, pos:Pos){
+        self.pos_in=Some(pos);
+    }
+
+}
+
+impl Maze {
+    fn display_maze(&self, current_pos:&Pos, width:i32) {
+
+        let band=width/2;
+        
+        let max_x=current_pos.x+band;
+        let max_y=current_pos.y+band;
+        let min_x=current_pos.x-band;
+        let min_y=current_pos.y-band;
+    
+        let min_x=max(0,min_x) as usize;
+        let min_y=max(0, min_y) as usize;
+        let max_x=min(max_x,self.grid[0].len() as i32-1) as usize;
+        let max_y=min(max_y,self.grid.len() as i32-1) as usize;
+        
+        for pos_y in min_y..max_y {
+            for pos_x in min_x..max_x {
+                let p_pos=Pos{x:pos_x as i32, y:pos_y as i32};
+                if &p_pos == current_pos {
+                    // Red background for current position
+                    print!("\x1B[41m");
+                } else {
+                    match self.grid[pos_y as usize][pos_x as usize] {
+                        '1' => print!("\x1B[47m \x1B[0m "), // White background for walls
+                        _ => print!(""), // Normal output for paths
+                    }
+                }
+
+                let c:char = self.grid[pos_y as usize][pos_x as usize];
+                //print!("{c} :{},{}", pos_x,pos_y);
+                print!("{c}");
+                if &p_pos == current_pos {
+                    // Red background for current position
+                    print!("\x1B[0m ");
+                }
+            }
+            println!();
+        }
+    }
+}
 fn get_move(v:&Vec<Vec<char>>, pos:Pos,dir:Direction)->Option<Pos> {
     let size_x=v[0].len();
     let size_y=v.len();
@@ -71,48 +148,21 @@ fn get_move(v:&Vec<Vec<char>>, pos:Pos,dir:Direction)->Option<Pos> {
     }
 }
 
-fn display_maze(maze:&Vec<Vec<char>>, x:i32, y:i32, width:i32) {
-
-    let band=width/2;
-    
-    let max_x=x+band;
-    let max_y=y+band;
-    let min_x=x-band;
-    let min_y=y-band;
-
-    let min_x=max(0,min_x) as usize;
-    let min_y=max(0, min_y) as usize;
-    let max_x=min(max_x,maze[0].len() as i32-1) as usize;
-    let max_y=min(max_y,maze.len() as i32-1) as usize;
-    
-    for pos_y in min_y..max_y {
-        for pos_x in min_x..max_x {
-            let c:char = maze[pos_y as usize][pos_x as usize];
-            //print!("{c} :{},{}", pos_x,pos_y);
-            print!("{c}");
-        }
-        println!();
-    }
-}
-
 #[aoc(day19, part1)]
 fn solve_part1(input: &Vec<Vec<char>>) -> String {
 
-    let mut entry=0;
-    for (x, &c) in input[0].iter().enumerate(){
-        if c =='|' {
-            entry=x as i32;
-            println!("Found entry : {:?}", entry);
-            break;
-        }
+    let mut maze:Maze=Maze::new(input);
+
+    if maze.get_entry().is_none() {
+        println!("No entry found");
+        return "".to_string();
     }
-    let mut pkt_pos=Pos{x:entry, y:0};
-    let mut pkt_dir:Direction=Direction::South;
+    let mut pkt_pos=maze.pos_in.unwrap();
 
     loop {
-        display_maze(&input, pkt_pos.x, pkt_pos.y, 30);
+        maze.display_maze(&pkt_pos, 12);
         match input[pkt_pos.y as usize][pkt_pos.y as usize] {
-           _ => panic!("input not handled : {:?}\t at pos {:?}",input[pkt_pos.x as usize][pkt_pos.y as usize], pkt_pos ),
+           _ => panic!("input not handled : {:?}\t at pos {:?}",input[pkt_pos.y as usize][pkt_pos.x as usize], pkt_pos ),
         }
 
         break;
