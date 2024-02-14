@@ -7,12 +7,12 @@ fn input_generator(input: &str) -> Vec<Vec<char>> {
     let mut v:Vec<Vec<char>>=Vec::new();
 
 //    let input="s1,x3/4,pe/b";
-    let input="    |          
+    /*let input="    |          
     |  +--+    
     A  |  C    
 F---|--|-E---+ 
     |  |  |  D 
-    +B-+  +--+ ";
+    +B-+  +--+ ";*/
 
     for line in input.lines() {
         let l_c = line.chars().collect::<Vec<char>>();
@@ -248,7 +248,7 @@ impl Maze {
                         if let Some(c_pos) = self.get_move(self.pos_current) {
                             self.pos_current=c_pos;
                         }else {
-                            return format!("{}", self.steps);
+                            return format!("{}", self.steps-1);
                         }
                         }
                     else {
@@ -259,7 +259,7 @@ impl Maze {
                     if let Some(c_pos) = self.get_move(self.pos_current) {
                         self.pos_current=c_pos;
                     }else {
-                        return format!("{}", self.steps);
+                        return format!("{}", self.steps-1);
                     }
                 },
                 c if ('A'..='Z').contains(&c) => {
@@ -268,7 +268,7 @@ impl Maze {
                     if let Some(c_pos) = self.get_move(self.pos_current) {
                         self.pos_current=c_pos;
                     }else {
-                        return format!("{}", self.steps);
+                        return format!("{}", self.steps-1);
                     }
                 }
                _ => 
@@ -276,7 +276,7 @@ impl Maze {
                     self.display_maze(&self.pos_current, 25);
 
                     println!("Current string:{}", self.result);
-                    return format!("{}", self.steps);
+                    return format!("{}", self.steps-1);
                     //panic!("input not handled : {:?}\t at pos {:?}",c, self.pos_current)
                 },
             }
