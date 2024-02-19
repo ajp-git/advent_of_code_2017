@@ -9,11 +9,11 @@ fn input_generator(input: &str) -> HashMap<(i32,i32), bool> {
     let mut h:HashMap<(i32,i32), bool> = HashMap::new();
     let mut pos_x = 0;
     let mut pos_y = 0;
-
+/*
     let input = "..#
 #..
 ...";
-
+ */
     for line in input.lines() {
         pos_x=0;
         for c in line.chars() {
