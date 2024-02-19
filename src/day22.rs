@@ -10,9 +10,9 @@ fn input_generator(input: &str) -> HashMap<(i32,i32), NodeStatus> {
     let mut pos_x = 0;
     let mut pos_y = 0;
 
-    let input = "..#
+    /*let input = "..#
 #..
-...";
+...";*/
 
     for line in input.lines() {
         pos_x=0;
