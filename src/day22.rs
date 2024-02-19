@@ -25,9 +25,15 @@ fn input_generator(input: &str) -> HashMap<(i32,i32), bool> {
 
 
 #[aoc(day22, part1)]
-fn solve_part1(input: &HashMap<(i32,i32), bool>) -> u32 {
+fn solve_part1(h: &HashMap<(i32,i32), bool>) -> u32 {
 
     // find middle to start
+    let start_x = (h.keys().map(|(x,_)| x ).max().unwrap()-
+        h.keys().map(|(x,_)| x ).min().unwrap())/2+1;
 
+    let start_y = (h.keys().map(|(_,y)| y ).max().unwrap()-
+        h.keys().map(|(_,y)| y ).min().unwrap())/2+1;
+
+    println!("Starting at ({},{})", start_x, start_y);
     0
 }
