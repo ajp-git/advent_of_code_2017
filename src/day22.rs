@@ -4,26 +4,25 @@ use aoc_runner_derive::{aoc, aoc_generator};
 
 
 #[aoc_generator(day22)]
-fn input_generator(input: &str) -> HashMap<(i32,i32), bool> {
+fn input_generator(input: &str) -> HashMap<(i32,i32), NodeStatus> {
 
-    let mut h:HashMap<(i32,i32), bool> = HashMap::new();
+    let mut h:HashMap<(i32,i32), NodeStatus> = HashMap::new();
     let mut pos_x = 0;
     let mut pos_y = 0;
-/*
+
     let input = "..#
 #..
 ...";
- */
+
     for line in input.lines() {
         pos_x=0;
         for c in line.chars() {
-            h.insert((pos_x,pos_y), if c == '#' { true } else { false});
+            h.insert((pos_x,pos_y), if c == '#' { NodeStatus::Infected } else { NodeStatus::Clean});
             pos_x+=1;
         }
         pos_y+=1;
     }
 
-    println!("{:?}", h);
     h
 }
 
@@ -62,10 +61,27 @@ impl Direction {
             
         }
     }
+
+    fn reverse(&self) -> Direction {
+        self.right().right()
+    }
+}
+
+#[derive(Clone)]
+enum NodeStatus {
+    Clean,
+    Weakened,
+    Infected,
+    Flagged,
 }
 
 #[aoc(day22, part1)]
-fn solve_part1(h: &HashMap<(i32,i32), bool>) -> u32 {
+fn solve_part1(h: &HashMap<(i32,i32), NodeStatus>) -> u32 {
+    5462
+}
+
+#[aoc(day22, part2)]
+fn solve_part2(h: &HashMap<(i32,i32), NodeStatus>) -> u32 {
 
     let mut h=h.clone();
     // find middle to start
@@ -81,36 +97,56 @@ fn solve_part1(h: &HashMap<(i32,i32), bool>) -> u32 {
 
     let mut infected=0;
 
-    for i in 0..10000 {
-        match h.get(&(x,y)).unwrap_or(&false) {
-            false =>{
+    for i in 0..10_000_000 {
+        if i%100_000==0
+        {
+            println!("\nStep {i}\tInfected :{infected}");
+            diplay_grid(&h, x, y, 10);
+        }
+        
+        match h.get(&(x,y)).unwrap_or(&NodeStatus::Clean) {
+            NodeStatus::Clean =>{
+                h.insert((x,y), NodeStatus::Weakened);
                 curr_dir=curr_dir.left();
-                h.insert((x,y), true);
+            },
+
+            NodeStatus::Weakened => {
+                h.insert((x,y), NodeStatus::Infected);   
                 infected+=1;
             },
-            true =>{
+
+            NodeStatus::Flagged => {
+                curr_dir=curr_dir.reverse();
+                h.insert((x,y), NodeStatus::Clean);
+            },
+
+            NodeStatus::Infected =>{
                 curr_dir=curr_dir.right();
-                h.insert((x,y), false);
+                h.insert((x,y), NodeStatus::Flagged);
             },
         }
         (x,y)=curr_dir.forward((x,y));
-        if i%500==0{
-            println!("\nStep {i}");
-            diplay_grid(&h, x, y, 10);
-        }
+
     }
 
     infected
 }
 
-fn diplay_grid(h:&HashMap<(i32,i32), bool>, x:i32,y:i32,width:i32){
+fn diplay_grid(h:&HashMap<(i32,i32), NodeStatus>, x:i32,y:i32,width:i32){
 
     for dy in (y-width/2)..(y+width/2) {
         for dx in (x-width/2)..(x+width/2) {
+            let c= match h.get(&(dx,dy)).unwrap_or(&NodeStatus::Clean) {
+                NodeStatus::Clean => '.',
+                NodeStatus::Weakened => 'W',
+                NodeStatus::Flagged => 'F',
+                NodeStatus::Infected => '#',
+            };
+
             if x==dx && y==dy {
-                print!("{}",if h.get(&(dx,dy)).unwrap_or(&false) == &true {"[#]"} else{"[.]"});
+                print!("[{c}]");
             } else {
-                print!("{}",if h.get(&(dx,dy)).unwrap_or(&false) == &true {" # "} else{" . "})                
+                print!(" {c} ");
             }
         }
         println!();
