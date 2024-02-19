@@ -237,8 +237,8 @@ impl Maze {
         self.pos_current=self.pos_in.unwrap();
 
         loop {
-//            sleep(Duration::from_millis(4));
-//            self.display_maze(&self.pos_current, 15);
+            sleep(Duration::from_millis(10));
+            self.display_maze(&self.pos_current, 35);
             let c= self.grid[self.pos_current.y as usize][self.pos_current.x as usize];
             self.steps+=1;
             match c {
