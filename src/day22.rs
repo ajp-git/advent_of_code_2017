@@ -43,6 +43,15 @@ impl Direction {
             Direction::Right => Direction::Down 
         }
     }
+    
+    fn left (&self) -> Direction{
+        match self {
+            Direction::Down => Direction::Right, 
+            Direction::Up => Direction::Left, 
+            Direction::Left => Direction::Down, 
+            Direction::Right => Direction::Up 
+        }
+    }
 }
 
 #[aoc(day22, part1)]
