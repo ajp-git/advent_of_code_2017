@@ -23,6 +23,23 @@ fn input_generator(input: &str) -> HashMap<(i32,i32), bool> {
     h
 }
 
+enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+impl Direction {
+    
+    fn right (&self) -> Direction{
+        match self {
+            Direction::Down => Direction::Left, 
+            Direction::Up => Direction::Right, 
+            Direction::Left => Direction::Up, 
+            Direction::Right => Direction::Down 
+        }
+    }
+}
 
 #[aoc(day22, part1)]
 fn solve_part1(h: &HashMap<(i32,i32), bool>) -> u32 {
@@ -35,5 +52,8 @@ fn solve_part1(h: &HashMap<(i32,i32), bool>) -> u32 {
         h.keys().map(|(_,y)| y ).min().unwrap())/2+1;
 
     println!("Starting at ({},{})", start_x, start_y);
+
+    let mut curr_dir=Direction::Up;
+
     0
 }
