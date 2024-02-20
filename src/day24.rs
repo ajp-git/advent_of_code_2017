@@ -33,7 +33,7 @@ fn solve_part2(input:&Vec<(u8,u8)>) -> u32 {
     let res=connect2(0, input, 0, 0);
 
     println!("{:?}", res);
-    res.1
+    res.0
 }
 
 /// returns (weight, length) 
@@ -80,8 +80,10 @@ fn connect2(start: u8, avail: &Vec<(u8,u8)>, length:u32, weight:u32 ) -> (u32, u
             shrink.remove(pos);
             
             let res = connect2(s, &shrink, length+1, (next.0+next.1) as u32);
-            max_weight=max_weight.max(res.0);
-            max_length=max_length.max(res.1);
+            if res.1 > max_length {
+                max_length=res.1;
+                max_weight=res.0;
+            }
         }
     }
     (weight+max_weight,length+max_length)
