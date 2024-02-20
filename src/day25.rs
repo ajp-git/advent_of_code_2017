@@ -1,3 +1,4 @@
+use core::fmt;
 use std::collections::HashMap;
 
 use aoc_runner_derive::{aoc, aoc_generator};
@@ -9,6 +10,32 @@ struct Cpu {
     pos:i32,
     h_states:HashMap<char,State>,
     curr_state:char,
+    steps:u32,
+    max_steps:u32,
+}
+
+impl fmt::Display for Cpu {
+    fn fmt (&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for p in self.pos.saturating_sub(5)..=self.pos.saturating_add(5) {
+            let v = self.h_slots.get(&p).unwrap_or(&0);
+            if p == self.pos {
+                write!(f, "[{v}]")?; // Use the '?' operator to handle errors
+            } else {
+                write!(f, " {v} ")?; // Use the '?' operator to handle errors
+            }
+        }
+
+        write!(f, "\tAfter {} steps; About to run state {}\n", self.steps, self.curr_state)?;
+        Ok(()) // Return Ok if everything writes successfully
+    }
+}
+
+impl Cpu {
+    fn run (&mut self) {
+        for _ in 0..self.max_steps {
+            ;
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -29,8 +56,8 @@ fn input_generator(input: &str) -> Cpu {
     println!("Current state {:?}",current_state);
 
     let re=Regex::new(r"Perform a diagnostic checksum after (\d+) steps.").unwrap();
-    let steps=re.captures(lines.next().unwrap()).unwrap().get(1).unwrap().as_str().parse::<u32>().unwrap();
-    println!("Current steps {:?}\n",steps);
+    let max_steps=re.captures(lines.next().unwrap()).unwrap().get(1).unwrap().as_str().parse::<u32>().unwrap();
+    println!("Max steps {:?}\n",max_steps);
 
 
     while lines.next().is_some() { // blank line
@@ -70,12 +97,16 @@ fn input_generator(input: &str) -> Cpu {
         }
     }
 
-    Cpu{ h_slots: HashMap::new(), curr_state:current_state, h_states, pos:0 }
+    Cpu{ h_slots: HashMap::new(), curr_state:current_state, h_states, pos:0, steps:0, max_steps }
 }
 
 #[aoc(day25, part1)]
 fn solve_part1(cpu:&Cpu) -> u32 {
 
     println!("Cpu : {:?}", cpu);
+    println!();
+    println!("Cpu : {}",cpu);
+
+
 0
 }
