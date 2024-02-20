@@ -1,38 +1,81 @@
 use std::collections::HashMap;
 
 use aoc_runner_derive::{aoc, aoc_generator};
+use regex::Regex;
 
-
+#[derive(Debug)]
 struct Cpu {
     h_slots:HashMap<i32,u8>,
     pos:i32,
     h_states:HashMap<char,State>,
-
+    curr_state:char,
 }
 
+#[derive(Debug)]
 struct State {
-    if0_write:u8,
-    if0_jump:i8,
-    if0_state:char,
-    if1_write:u8,
-    if1_jump:i8,
-    if1_state:char,
+    if_write:[u8;2],
+    if_jump:[i8;2],
+    if_state:[char;2],
 }
 
 #[aoc_generator(day25)]
-fn input_generator(input: &str) -> HashMap<char, State> {
+fn input_generator(input: &str) -> Cpu {
 
-    let mut h:HashMap<char, State> = HashMap::new();
+
+    let mut h_states:HashMap<char, State> = HashMap::new();
     let mut lines=input.lines();
     
     let current_state = lines.next().unwrap().chars().nth(15).unwrap();
     println!("Current state {:?}",current_state);
 
-    h
+    let re=Regex::new(r"Perform a diagnostic checksum after (\d+) steps.").unwrap();
+    let steps=re.captures(lines.next().unwrap()).unwrap().get(1).unwrap().as_str().parse::<u32>().unwrap();
+    println!("Current steps {:?}\n",steps);
+
+
+    while lines.next().is_some() { // blank line
+
+        let re=Regex::new(r"In state (\w+).").unwrap();
+        let c_state=re.captures(lines.next().unwrap().trim()).unwrap().get(1).unwrap().as_str().chars().nth(0).unwrap();
+        println!("Current state {:?}\n",c_state);
+
+        let mut if_write:[u8;2]=[0;2];
+        let mut if_jump:[i8;2]=[0;2];
+        let mut if_state:[char;2]=[' ';2];
+
+        // - Write the value 1.
+        let re_write=Regex::new(r"- Write the value (\d+).").unwrap();
+        // - Move one slot to the right.
+        let re_jump=Regex::new(r"- Move one slot to the (\w+).").unwrap();
+        // - Continue with state B.
+        let re_state=Regex::new(r"- Continue with state ([A-Z]).").unwrap();
+        
+        for i in 0..=1 {
+            //If the current value is 0:
+            lines.next();
+
+            if_write[i] = re_write.captures(lines.next().unwrap()).unwrap().get(1).unwrap().as_str().parse::<u8>().unwrap();
+            println!("if {i} value {:?}\n",if_write[i]);
+
+            let l = lines.next().unwrap();
+            match re_jump.captures(l).unwrap().get(1).unwrap().as_str() {
+                "left" => if_jump[i]=-1,
+                "right" => if_jump[i]=1,
+                _ => panic!("{l}"),
+            }
+            if_state[i]=re_state.captures(lines.next().unwrap()).unwrap().get(1).unwrap().as_str().chars().nth(0).unwrap();
+            
+            h_states.insert(c_state, State { if_write, if_jump, if_state });
+
+        }
+    }
+
+    Cpu{ h_slots: HashMap::new(), curr_state:current_state, h_states, pos:0 }
 }
 
 #[aoc(day25, part1)]
-fn solve_part1(input:&HashMap<char, State>) -> u32 {
+fn solve_part1(cpu:&Cpu) -> u32 {
 
+    println!("Cpu : {:?}", cpu);
 0
 }
