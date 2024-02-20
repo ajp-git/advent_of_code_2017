@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use aoc_runner_derive::{aoc, aoc_generator};
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Cpu {
     h_slots:HashMap<i32,u8>,
     pos:i32,
@@ -16,6 +16,7 @@ struct Cpu {
 
 impl fmt::Display for Cpu {
     fn fmt (&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "\r")?;
         for p in self.pos.saturating_sub(5)..=self.pos.saturating_add(5) {
             let v = self.h_slots.get(&p).unwrap_or(&0);
             if p == self.pos {
@@ -25,7 +26,7 @@ impl fmt::Display for Cpu {
             }
         }
 
-        write!(f, "\tAfter {} steps; About to run state {}\n", self.steps, self.curr_state)?;
+        write!(f, "\tAfter {} steps; About to run state {}", self.steps, self.curr_state)?;
         Ok(()) // Return Ok if everything writes successfully
     }
 }
@@ -33,12 +34,25 @@ impl fmt::Display for Cpu {
 impl Cpu {
     fn run (&mut self) {
         for _ in 0..self.max_steps {
-            ;
+            self.steps+=1;            
+            let st = self.h_states.get(&self.curr_state).unwrap();
+            
+            let mut cur_val:u8=0;
+            if self.h_slots.get(&self.pos).is_some(){
+                cur_val = *self.h_slots.get(&self.pos).unwrap();
+            }
+            self.h_slots.insert(self.pos, st.if_write[cur_val as usize]);
+            
+            self.pos += st.if_jump[cur_val as usize] as i32;
+            self.curr_state=st.if_state[cur_val as usize];
+            if self.steps%10000==0 {
+                print!("{}", self);
+            }
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct State {
     if_write:[u8;2],
     if_jump:[i8;2],
@@ -103,10 +117,10 @@ fn input_generator(input: &str) -> Cpu {
 #[aoc(day25, part1)]
 fn solve_part1(cpu:&Cpu) -> u32 {
 
+    let mut cpu = cpu.clone();
     println!("Cpu : {:?}", cpu);
     println!();
     println!("Cpu : {}",cpu);
-
-
-0
+    cpu.run();
+    cpu.h_slots.iter().filter(|(_,&v)| v==1).count() as u32
 }
